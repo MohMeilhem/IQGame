@@ -1,0 +1,159 @@
+﻿@model IQGame.Admin.Models.EditQuestionModel
+
+@{
+    ViewData["Title"] = "Edit";
+    var apiBaseUrl = "https://localhost:7187";
+}
+
+<h1>Edit Question</h1>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <h4>Validation Errors:</h4>
+        <ul>
+            @foreach (var modelState in ViewData.ModelState.Values)
+            {
+                foreach (var error in modelState.Errors)
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            }
+        </ul>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit" enctype="multipart/form-data" method="post" id="editForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" name="returnCategoryId" value="@ViewData["ReturnCategoryId"]" />
+            <input type="hidden" name="returnDifficulty" value="@ViewData["ReturnDifficulty"]" />
+
+            <div class="form-group mb-3">
+                <label asp-for="Text" class="control-label">Question Text</label>
+                <input asp-for="Text" class="form-control" />
+                <span asp-validation-for="Text" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Current Image</label>
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    var imageUrl = Model.ImageUrl.StartsWith("http") ? Model.ImageUrl : $"{apiBaseUrl}{Model.ImageUrl}";
+                    <img src="@imageUrl" class="d-block mb-2" style="max-width: 200px;" alt="Current Image" />
+                }
+                else
+                {
+                    <p class="text-muted">No image uploaded</p>
+                }
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Upload New Image</label>
+                <input asp-for="ImageFile" class="form-control" accept="image/*" id="imageFile" />
+                <small class="text-muted">Leave empty to keep current image</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Difficulty" class="control-label">Difficulty Level</label>
+                <select asp-for="Difficulty" class="form-select">
+                    <option value="1">Easy</option>
+                    <option value="2">Medium</option>
+                    <option value="3">Hard</option>
+                </select>
+                <span asp-validation-for="Difficulty" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="CategoryId" class="control-label">Category</label>
+                <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId"></select>
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+
+            <h3>Answers</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Text</th>
+                        <th>Correct</th>
+                        <th>Image</th>
+                        <th>Upload New Image</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Answers.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                <input asp-for="Answers[@i].Text" class="form-control" />
+                                <input type="hidden" asp-for="Answers[@i].Id" />
+                            </td>
+                            <td>
+                                <input type="radio" name="CorrectAnswer" value="@i" @(Model.Answers[i].IsCorrect ? "checked" : "") />
+                                <input type="hidden" asp-for="Answers[@i].IsCorrect" />
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(Model.Answers[i].ImageUrl))
+                                {
+                                    var answerImageUrl = Model.Answers[i].ImageUrl.StartsWith("http") ? Model.Answers[i].ImageUrl : $"{apiBaseUrl}{Model.Answers[i].ImageUrl}";
+                                    <img src="@answerImageUrl" width="60" height="60" style="object-fit:cover;" alt="Answer Image" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No image</span>
+                                }
+                            </td>
+                            <td>
+                                <input type="file" name="AnswerImageFiles" class="form-control" accept="image/*" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary" id="submitBtn">Save Changes</button>
+                <a asp-action="Index" asp-route-categoryId="@ViewData["ReturnCategoryId"]" asp-route-difficulty="@ViewData["ReturnDifficulty"]" class="btn btn-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        console.log('Edit page loaded');
+        
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            console.log('Form submission started');
+            
+            var imageFile = document.getElementById('imageFile');
+            console.log('Image file selected:', imageFile.files.length > 0);
+            if (imageFile.files.length > 0) {
+                console.log('Image file name:', imageFile.files[0].name);
+                console.log('Image file size:', imageFile.files[0].size);
+            }
+            
+            var formData = new FormData(this);
+            console.log('Form action:', this.action);
+            console.log('Form method:', this.method);
+            console.log('Form enctype:', this.enctype);
+            
+            // Log form data
+            for (var pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+        });
+        
+        document.getElementById('imageFile').addEventListener('change', function(e) {
+            console.log('Image file changed');
+            if (this.files.length > 0) {
+                console.log('Selected file:', this.files[0].name);
+                console.log('File size:', this.files[0].size);
+            }
+        });
+    </script>
+}

@@ -1,0 +1,23 @@
+@inherits LayoutComponentBase
+@using IQGame.Client.Shared
+
+<div class="page">
+    <NavMenu />
+    <main>
+        @Body
+    </main>
+</div>
+
+<style>
+    .page {
+        min-height: 100vh;
+        background-color: var(--background-color);
+    }
+
+    main {
+        padding: 0;
+        min-height: calc(100vh - 70px); /* Account for fixed header height */
+    }
+
+
+</style>

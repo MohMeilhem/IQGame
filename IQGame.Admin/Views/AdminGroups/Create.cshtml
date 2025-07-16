@@ -1,0 +1,59 @@
+@model IQGame.Shared.Models.Group
+
+@{
+    ViewData["Title"] = "Create Group";
+}
+
+<h1>Create Group</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" placeholder="e.g., الرياضة, أفلام ومسلسلات, الطعام" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Description" class="control-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Optional description for this group"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="Color" class="control-label">Color (Hex Code)</label>
+                <input asp-for="Color" class="form-control" type="color" placeholder="#6c3fc5" />
+                <small class="form-text text-muted">Choose a color for this group (optional)</small>
+                <span asp-validation-for="Color" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="DisplayOrder" class="control-label">Display Order</label>
+                <input asp-for="DisplayOrder" class="form-control" type="number" value="0" />
+                <small class="form-text text-muted">Lower numbers appear first</small>
+                <span asp-validation-for="DisplayOrder" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <div class="form-check">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label">Active</label>
+                </div>
+                <span asp-validation-for="IsActive" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Create</button>
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

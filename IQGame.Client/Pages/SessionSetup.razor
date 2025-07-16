@@ -1,0 +1,1894 @@
+﻿@page "/session-setup"
+@using System.Net.Http.Json
+@using IQGame.Application.Models
+@using IQGame.Client.Services
+@using IQGame.Client.Models
+@using IQGame.Shared.Models
+@inject SessionService SessionService
+@inject GameStateService GameState
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+@inject FavoritesService FavoritesService
+
+<div class="container d-flex flex-column align-items-center">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="selected-categories-bar">
+        @if (categories != null && categories.Any(c => c.IsSelected))
+        {
+            <div class="selected-categories-list">
+                @foreach (var category in categories.Where(c => c.IsSelected))
+                {
+                    <div class="mini-category-card">
+                        <button class="mini-category-remove" @onclick="() => category.IsSelected = false" title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="mini-category-image-wrapper">
+                            <img src="@category.ImageUrl" alt="@category.Name" class="mini-category-image" />
+                        </div>
+                        <div class="mini-category-name">@category.Name</div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="text-center mb-4">
+        <h3>الفئات</h3>
+    </div>
+
+    <!-- Layout Selection -->
+    <div class="layout-selector">
+        <button class="layout-btn @(currentLayout == LayoutType.AllTogether ? "active" : "")" @onclick="() => SwitchLayout(LayoutType.AllTogether)">
+            <i class="fas fa-th-large"></i>
+            جميع الفئات
+        </button>
+        <button class="layout-btn @(currentLayout == LayoutType.Groups ? "active" : "")" @onclick="() => SwitchLayout(LayoutType.Groups)">
+            <i class="fas fa-layer-group"></i>
+            الفئات المجمعة
+        </button>
+        <button class="layout-btn @(currentLayout == LayoutType.Favorites ? "active" : "")" @onclick="() => SwitchLayout(LayoutType.Favorites)">
+            <i class="fas fa-heart"></i>
+            المفضلة
+        </button>
+    </div>
+
+    <div class="card mb-4 w-100 no-bg-card">
+        <div class="card-body categories-container">
+            @if (categories == null)
+            {
+                <div class="col-12 text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                </div>
+            }
+            else if (!categories.Any())
+            {
+                <div class="alert alert-warning text-center">
+                    No categories found. Please check the connection to the server.
+                </div>
+            }
+            else
+            {
+                @if (currentLayout == LayoutType.Groups)
+                {
+                    @* Groups Layout Component *@
+                    @if (groups != null && categories != null)
+                    {
+                        <div class="groups-layout">
+                            <div class="groups-controls mb-3">
+                                <button class="btn btn-outline-secondary btn-sm @(showAllGroupsActive ? "active" : "")" @onclick="() => ToggleAllGroups(true)">
+                                    <i class="fas fa-expand"></i> إظهار الكل
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm @(!showAllGroupsActive ? "active" : "")" @onclick="() => ToggleAllGroups(false)">
+                                    <i class="fas fa-compress"></i> إخفاء الكل
+                                </button>
+                            </div>
+                            @foreach (var group in groups.OrderBy(g => g.DisplayOrder))
+                            {
+                                var groupCategories = categories.Where(c => c.GroupId == group.Id).ToList();
+                                if (groupCategories.Any())
+                                {
+                                    var isExpanded = groupExpandedStates.ContainsKey(group.Id) && groupExpandedStates[group.Id];
+                                    <div class="category-group mb-4">
+                                        <div class="category-group-header" @onclick="() => ToggleGroupExpansion(group.Id)">
+                                            <h4 class="category-group-title">
+                                                <i class="fas @(isExpanded ? "fa-chevron-down" : "fa-chevron-right")"></i>
+                                                @group.Name
+                                            </h4>
+                                        </div>
+                                        @if (isExpanded)
+                                        {
+                                            <div class="categories-grid" style="grid-template-columns: repeat(@(Math.Min(groupCategories.Count, 6)), 1fr); gap: 2.5rem; width: @(groupCategories.Count < 6 ? $"{groupCategories.Count * 165 + (groupCategories.Count - 1) * 11}px" : "100%"); margin: 0 auto;">
+                                                @foreach (var category in groupCategories)
+                                                {
+                                                                                            var isDisabled = GetSelectedCount() >= 6 && !category.IsSelected;
+                                        var hasNoGames = category.AvailableGames < 1;
+                                        <div class="category-card @(category.IsSelected ? "selected" : "") @(isDisabled ? "disabled" : "") @(hasNoGames ? "no-games" : "")" 
+                                             @onclick="@(() => { if (!isDisabled && !hasNoGames) category.IsSelected = !category.IsSelected; })">
+                                                        <div class="category-checkbox">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                   @bind="category.IsSelected"
+                                                                   disabled="@(isDisabled || hasNoGames)"
+                                                                   id="category-@category.Id" />
+                                                        </div>
+                                                        <div class="category-image-wrapper-for-info">
+                                                            <img src="@category.ImageUrl" class="category-image" alt="@category.Name" />
+                                                            <button type="button" class="category-info" @onclick:stopPropagation="true" @onclick="(() => ShowCategoryDescription(category.Id, category.Name))">
+                                                                <i class="fas fa-info-circle"></i>
+                                                            </button>
+                                                            <button type="button" class="category-favorite" @onclick:stopPropagation="true" @onclick="async () => await ToggleFavorite(category)">
+                                                                <i class="fas fa-heart @(category.IsFavorite ? "favorite-active" : "")"></i>
+                                                            </button>
+                                                        </div>
+                                                        <label class="category-title" for="category-@category.Id">
+                                                            @category.Name
+                                                        </label>
+                                                        <div class="availability-circle" title="الالعاب المتاحة">
+                                                            <span class="availability-number">@category.AvailableGames</span>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            @* Show categories without groups *@
+                            @{
+                                var ungroupedCategories = categories.Where(c => !c.GroupId.HasValue).ToList();
+                            }
+                            @if (ungroupedCategories.Any())
+                            {
+                                var isUngroupedExpanded = groupExpandedStates.ContainsKey(-1) && groupExpandedStates[-1];
+                                <div class="category-group mb-4">
+                                    <div class="category-group-header" @onclick="() => ToggleGroupExpansion(-1)">
+                                        <h4 class="category-group-title">
+                                            <i class="fas @(isUngroupedExpanded ? "fa-chevron-down" : "fa-chevron-right")"></i>
+                                            أخرى
+                                        </h4>
+                                    </div>
+                                    @if (isUngroupedExpanded)
+                                    {
+                                        <div class="categories-grid" style="grid-template-columns: repeat(@(Math.Min(ungroupedCategories.Count, 6)), 1fr); gap: 2.5rem; width: @(ungroupedCategories.Count < 6 ? $"{ungroupedCategories.Count * 165 + (ungroupedCategories.Count - 1) * 11}px" : "100%"); margin: 0 auto;">
+                                            @foreach (var category in ungroupedCategories)
+                                            {
+                                                var isDisabled = GetSelectedCount() >= 6 && !category.IsSelected;
+                                                var hasNoGames = category.AvailableGames < 1;
+                                                <div class="category-card @(category.IsSelected ? "selected" : "") @(isDisabled ? "disabled" : "") @(hasNoGames ? "no-games" : "")" 
+                                                     @onclick="@(() => { if (!isDisabled && !hasNoGames) category.IsSelected = !category.IsSelected; })">
+                                                    <div class="category-checkbox">
+                                                        <input class="form-check-input" type="checkbox"
+                                                               @bind="category.IsSelected"
+                                                               disabled="@(isDisabled || hasNoGames)"
+                                                               id="category-@category.Id" />
+                                                    </div>
+                                                    <div class="category-image-wrapper-for-info">
+                                                        <img src="@category.ImageUrl" class="category-image" alt="@category.Name" />
+                                                        <button type="button" class="category-info" @onclick:stopPropagation="true" @onclick="(() => ShowCategoryDescription(category.Id, category.Name))">
+                                                            <i class="fas fa-info-circle"></i>
+                                                        </button>
+                                                        <button type="button" class="category-favorite" @onclick:stopPropagation="true" @onclick="async () => await ToggleFavorite(category)">
+                                                            <i class="fas fa-heart @(category.IsFavorite ? "favorite-active" : "")"></i>
+                                                        </button>
+                                                    </div>
+                                                    <label class="category-title" for="category-@category.Id">
+                                                        @category.Name
+                                                    </label>
+                                                    <div class="availability-circle" title="الالعاب المتاحة">
+                                                        <span class="availability-number">@category.AvailableGames</span>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else if (currentLayout == LayoutType.AllTogether)
+                {
+                    @* All Together Layout Component *@
+                    @if (categories != null)
+                    {
+                        <div class="all-together-layout">
+                            <div class="categories-grid"
+                                 style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 2.5rem; width: 100%; max-width: calc(6 * 165px + 5 * 2.5rem); margin: 0 auto; min-width: 0;">
+                                @foreach (var category in categories)
+                                {
+                                    var isDisabled = GetSelectedCount() >= 6 && !category.IsSelected;
+                                    var hasNoGames = category.AvailableGames < 1;
+                                    <div class="category-card @(category.IsSelected ? "selected" : "") @(isDisabled ? "disabled" : "") @(hasNoGames ? "no-games" : "")" 
+                                         @onclick="@(() => { if (!isDisabled && !hasNoGames) category.IsSelected = !category.IsSelected; })">
+                                        <div class="category-checkbox">
+                                            <input class="form-check-input" type="checkbox"
+                                                   @bind="category.IsSelected"
+                                                   disabled="@(isDisabled || hasNoGames)"
+                                                   id="category-@category.Id" />
+                                        </div>
+                                        <div class="category-image-wrapper-for-info">
+                                            <img src="@category.ImageUrl" class="category-image" alt="@category.Name" />
+                                            <button type="button" class="category-info" @onclick:stopPropagation="true" @onclick="(() => ShowCategoryDescription(category.Id, category.Name))">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                            <button type="button" class="category-favorite" @onclick:stopPropagation="true" @onclick="async () => await ToggleFavorite(category)">
+                                                <i class="fas fa-heart @(category.IsFavorite ? "favorite-active" : "")"></i>
+                                            </button>
+                                        </div>
+                                        <label class="category-title" for="category-@category.Id">
+                                            @category.Name
+                                        </label>
+                                        <div class="availability-circle" title="الالعاب المتاحة">
+                                            <span class="availability-number">@category.AvailableGames</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else if (currentLayout == LayoutType.Favorites)
+                {
+                    @* Favorites Layout Component *@
+                    @if (favoriteCategories != null)
+                    {
+                        <div class="favorites-layout">
+                            @if (!favoriteCategories.Any())
+                            {
+                                <div class="text-center">
+                                    <i class="fas fa-heart text-muted" style="font-size: 3rem;"></i>
+                                    <h5 class="mt-3">لا توجد فئات مفضلة</h5>
+                                    <p class="text-muted">اضغط على أيقونة القلب في الفئات لإضافتها إلى المفضلة</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="categories-grid" style="grid-template-columns: repeat(@(Math.Min(favoriteCategories.Count, 6)), 1fr); gap: 2.5rem; width: @(favoriteCategories.Count < 6 ? $"{favoriteCategories.Count * 165 + (favoriteCategories.Count - 1) * 11}px" : "100%"); margin: 0 auto;">
+                                    @foreach (var favorite in favoriteCategories)
+                                    {
+                                        var category = categories?.FirstOrDefault(c => c.Id == favorite.Id);
+                                        if (category != null)
+                                        {
+                                            var isDisabled = GetSelectedCount() >= 6 && !category.IsSelected;
+                                            var hasNoGames = category.AvailableGames < 1;
+                                            <div class="category-card @(category.IsSelected ? "selected" : "") @(isDisabled ? "disabled" : "") @(hasNoGames ? "no-games" : "")" 
+                                                 @onclick="@(() => { if (!isDisabled && !hasNoGames) category.IsSelected = !category.IsSelected; })">
+                                                <div class="category-checkbox">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           @bind="category.IsSelected"
+                                                           disabled="@(isDisabled || hasNoGames)"
+                                                           id="category-@category.Id" />
+                                                </div>
+                                                <div class="category-image-wrapper-for-info">
+                                                    <img src="@category.ImageUrl" class="category-image" alt="@category.Name" />
+                                                    <button type="button" class="category-info" @onclick:stopPropagation="true" @onclick="(() => ShowCategoryDescription(category.Id, category.Name))">
+                                                        <i class="fas fa-info-circle"></i>
+                                                    </button>
+                                                    <button type="button" class="category-favorite" @onclick:stopPropagation="true" @onclick="async () => await ToggleFavorite(category)">
+                                                        <i class="fas fa-heart @(category.IsFavorite ? "favorite-active" : "")"></i>
+                                                    </button>
+                                                </div>
+                                                <label class="category-title" for="category-@category.Id">
+                                                    @category.Name
+                                                </label>
+                                                <div class="availability-circle" title="الالعاب المتاحة">
+                                                    <span class="availability-number">@category.AvailableGames</span>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </div>
+
+    <div class="text-center mb-4 random-btns-group">
+        <button class="random-btn complete-random-btn" @onclick="CompleteWithRandom" disabled="@(!CanCompleteWithRandom())">
+            <i class="fas fa-magic"></i> أكمل عشوائي
+        </button>
+        <button class="random-btn all-random-btn" @onclick="SelectRandomCategories" disabled="@(!CanSelectRandom())">
+            <i class="fas fa-random"></i> فئات عشوائية
+        </button>
+        <button class="random-btn clear-btn" @onclick="ClearSelection">
+            <i class="fas fa-times"></i> مسح الكل
+        </button>
+    </div>
+
+    <br>
+    @* Notification Popup *@
+    @if (showCategoryNotification)
+    {
+        <div class="category-notification">
+            <span>يرجى اختيار 6 فئات قبل بدء اللعبة</span>
+            <div class="notification-timer-bar"></div>
+        </div>
+    }
+
+    <!-- Session and Team Inputs - Moved to Bottom -->
+    <div class="session-setup-section">
+    <div class="row justify-content-center mb-4 w-100">
+        <div class="col-md-6 team-input-col">
+            <div class="form-group text-center">
+                <label class="d-block">اسم الجلسة</label>
+                <input class="form-control session-input" @bind="sessionName" @onblur="() => showSessionNameValidation = true" placeholder="اسم اللعبة" />
+                @if (showValidation && string.IsNullOrWhiteSpace(sessionName) || (showSessionNameValidation && string.IsNullOrWhiteSpace(sessionName)))
+                {
+                    <div class="text-danger">يرجى ادخال اسم اللعبة</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="team-inputs-row mb-4 w-100">
+        <div class="team-input-col">
+            <div class="form-group text-center">
+                <label>الفريق الثاني</label>
+                <input class="form-control session-input" @bind="team2" @onblur="() => showTeam1Validation = true" placeholder="اسم الفريق" />
+                @if (showValidation && string.IsNullOrWhiteSpace(team2) || (showTeam1Validation && string.IsNullOrWhiteSpace(team2)))
+                {
+                    <div class="text-danger">يرجى ادخال اسم الفريق</div>
+                }
+            </div>
+        </div>
+        <div class="team-input-col">
+            <div class="form-group text-center">
+                <label>الفريق الأول</label>
+                <input class="form-control session-input" @bind="team1" @onblur="() => showTeam2Validation = true" placeholder="اسم الفريق" />
+                @if (showValidation && string.IsNullOrWhiteSpace(team1) || (showTeam2Validation && string.IsNullOrWhiteSpace(team1)))
+                {
+                    <div class="text-danger">يرجى ادخال اسم الفريق</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mb-4">
+        <button class="start-game-btn" @onclick="CreateSession" disabled="@(IsCreating)">
+            @if (IsCreating)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span>جاري بدء الجلسة...</span>
+            }
+            else
+            {
+                <span>ابدأ اللعب</span>
+            }
+        </button>
+        </div>
+    </div>
+</div>
+<div style="padding-top: 2rem;"></div>
+<Footer />
+
+<style>
+    /* CSS Variables for consistent theming */
+    :root {
+        --primary-purple: #6c3fc5;
+        --primary-green: #0A6A4E;
+        --accent-green: #4CAF50;
+        --white: #ffffff;
+        --light-gray: #f8f9fa;
+        --dark-gray: #343a40;
+        --shadow-light: 0 2px 8px rgba(0,0,0,0.1);
+        --shadow-medium: 0 4px 16px rgba(0,0,0,0.15);
+        --shadow-heavy: 0 8px 25px rgba(0,0,0,0.2);
+        --gradient-primary: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        --gradient-secondary: linear-gradient(135deg, rgba(108, 63, 197, 0.1) 0%, rgba(10, 106, 78, 0.1) 100%);
+    }
+
+    /* Global container styling */
+    .container {
+        max-width: 1400px;
+        padding: 2rem 1rem 0 1rem;
+        background: linear-gradient(135deg, rgba(108, 63, 197, 0.02) 0%, rgba(10, 106, 78, 0.02) 100%);
+        min-height: calc(100vh - 70px); /* Subtract header height (70px) only */
+    }
+
+    /* Alert styling */
+    .alert {
+        border-radius: 1rem;
+        border: none;
+        box-shadow: var(--shadow-light);
+        font-weight: 600;
+        margin-bottom: 2rem;
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+        color: white;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #ffb300 0%, #ff9800 100%);
+        color: white;
+    }
+
+    /* Selected categories bar */
+    .selected-categories-bar {
+        position: sticky;
+        top: 1rem;
+        z-index: 100;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .selected-categories-list {
+        background: linear-gradient(135deg, rgba(108, 63, 197, 0.45) 0%, rgba(10, 106, 78, 0.45) 100%);
+        border-radius: 2rem;
+        padding: 0.8rem 0.8rem;
+        box-shadow: 0 4px 16px rgba(108,63,197,0.25);
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        max-width: 90%;
+        justify-content: center;
+        border: 2px solid rgba(108, 63, 197, 0.35);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .mini-category-card {
+        position: relative;
+        background: linear-gradient(90deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        border-radius: 1.2rem;
+        padding: 0.3rem 0.3rem 0.7rem 0.3rem;
+        width: 80px;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        transition: box-shadow 0.3s, background 0.3s;
+        box-shadow: 0 2px 8px rgba(108,63,197,0.10);
+        border: 2.5px solid rgba(108, 63, 197, 0.22);
+        margin: 0 0.3rem;
+    }
+
+    .mini-category-card:hover {
+        /* No scale up */
+        box-shadow: 0 4px 16px rgba(108,63,197,0.18);
+    }
+
+    .mini-category-remove {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(108,63,197,0.12);
+        z-index: 2;
+    }
+
+    .mini-category-remove:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 16px rgba(108,63,197,0.18);
+    }
+
+    .mini-category-image-wrapper {
+        width: 64px;
+        height: 94px;
+        background: transparent;
+        border-radius: 0.7rem;
+        margin-bottom: 0.2rem;
+        margin-top: 0.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 4px rgba(108,63,197,0.08);
+        border: 2px solid rgba(108, 63, 197, 0.10);
+        overflow: hidden;
+    }
+
+    .mini-category-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0.7rem;
+    }
+
+    .mini-category-name {
+        color: white;
+        font-size: 0.78rem;
+        font-weight: bold;
+        text-align: center;
+        line-height: 1.2;
+        margin-top: 0.2rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    /* Main title styling */
+    h3 {
+        font-size: 3rem;
+        font-weight: bold;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 2rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Layout selector styling */
+    .layout-selector {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .layout-btn {
+        padding: 1rem 2rem;
+        border-radius: 1rem;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--gradient-primary);
+        border: none;
+        color: white;
+        box-shadow: var(--shadow-light);
+        position: relative;
+        overflow: hidden;
+        min-width: 140px;
+        text-align: center;
+    }
+
+    .layout-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .layout-btn:hover::before {
+        left: 100%;
+    }
+
+    .layout-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-heavy);
+        background: var(--gradient-primary);
+        border: none;
+        color: white;
+    }
+
+    .layout-btn.active {
+        background: var(--gradient-primary);
+        opacity: 0.7;
+        color: white;
+        border: none;
+        box-shadow: var(--shadow-light);
+    }
+
+    .layout-btn.active:hover {
+        background: var(--gradient-primary);
+        opacity: 0.7;
+        color: white;
+        border: none;
+        box-shadow: var(--shadow-heavy);
+    }
+
+    /* Card styling */
+    .no-bg-card {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Categories container with darker background */
+    .categories-container {
+        background: linear-gradient(135deg, rgba(108, 63, 197, 0.15) 0%, rgba(76, 175, 80, 0.1) 100%);
+        border-radius: 2rem;
+        padding: 2rem;
+        margin: 0;
+        border: 2px solid rgba(108, 63, 197, 0.2);
+        box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Groups layout styling */
+    .groups-layout {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .groups-controls {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        width: 100%;
+    }
+
+    .groups-controls .btn {
+        border-radius: 1rem;
+        padding: 1rem 2rem;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--gradient-primary);
+        border: none;
+        color: white;
+        box-shadow: var(--shadow-light);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .groups-controls .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .groups-controls .btn:hover::before {
+        left: 100%;
+    }
+
+    .groups-controls .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .groups-controls .btn-outline-secondary {
+        background: var(--gradient-primary);
+        border: none;
+        color: white;
+    }
+
+    .groups-controls .btn-outline-secondary:hover {
+        background: var(--gradient-primary);
+        border: none;
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .groups-controls .btn.active {
+        background: var(--gradient-primary);
+        color: white;
+        border: none;
+        box-shadow: var(--shadow-light);
+    }
+
+    .groups-controls .btn.active:hover {
+        background: var(--gradient-primary);
+        color: white;
+        border: none;
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .category-group {
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto 3rem auto;
+    }
+
+    .category-group-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 1.5rem;
+        min-height: 48px;
+        background: var(--gradient-primary);
+        border-radius: 2rem;
+        margin-bottom: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-medium);
+        border: 2px solid rgba(255,255,255,0.1);
+        text-align: center;
+    }
+
+    .category-group-header:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .category-group-title {
+        color: white;
+        margin: 0 auto;
+        font-size: 2rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Categories grid styling */
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.7rem;
+        padding: 1rem;
+        width: 100%;
+        max-width: 1800px;
+        margin: 0 auto;
+        justify-items: center;
+        justify-content: center;
+    }
+
+    .category-card {
+        height: 260px;
+        width: 165px;
+        background: linear-gradient(90deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        border-radius: 1.2rem;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        box-shadow: 0 8px 32px 0 rgba(108,63,197,0.18), 0 2px 8px 0 rgba(0,0,0,0.10);
+        border: 2.5px solid rgba(108, 63, 197, 0.22);
+        margin-bottom: 0.5rem;
+        position: relative;
+    }
+    .category-card .category-image-wrapper-for-info {
+        margin-top: 0.6rem;
+        height: 210px;
+        min-width: 140px;
+        max-width: 170px;
+        border-radius: 1.2rem;
+        position: relative;
+        z-index: 1;
+    }
+    .category-card .category-image {
+        width: 100%;
+        height: 210px;
+        object-fit: cover;
+        border-radius: 1.2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .category-info, .category-favorite {
+        position: absolute;
+        top: 6px;
+        width: auto;
+        height: auto;
+        border-radius: 0;
+        background: none;
+        color: #888;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: none;
+        z-index: 2;
+        transition: color 0.15s, transform 0.15s;
+        opacity: 1;
+        padding: 0;
+        outline: none;
+        box-shadow: none;
+    }
+    .category-info {
+        left: 6px;
+        color: #888;
+    }
+    .category-favorite {
+        right: 6px;
+        color: #888;
+    }
+    .category-favorite .favorite-active,
+    .category-favorite.favorite-active,
+    .category-favorite .fa-heart.favorite-active {
+        color: #ff4b6e !important;
+        text-shadow: 0 0 8px #ff4b6e !important;
+    }
+    .category-info:hover, .category-favorite:hover {
+        transform: scale(1.18);
+        color: #444;
+        background: none;
+    }
+    .category-favorite.favorite-active:hover {
+        color: #ff4b6e;
+        text-shadow: 0 0 12px #ff4b6e;
+    }
+    .category-info .fas, .category-favorite .fas {
+        font-size: 1.2em;
+        line-height: 1;
+    }
+    .category-title {
+        color: #fff;
+        font-size: 1.15rem;
+        font-weight: 700;
+        text-align: center;
+        margin-top: 0.2rem;
+        margin-bottom: 0.2rem;
+        text-shadow: 0 2px 8px rgba(44,62,80,0.18);
+        letter-spacing: 0.5px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Category availability styling */
+    .availability-circle {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 2rem;
+        height: 2rem;
+        background: var(--accent-green);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        z-index: 3;
+        transition: all 0.3s ease;
+    }
+
+    .availability-number {
+        color: white;
+        font-size: 1.6rem;
+        font-weight: bold;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    /* Adjust category card height back to original */
+    .category-card {
+        height: 260px; /* Back to original size */
+        position: relative;
+    }
+
+    .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: 0%;
+        background: var(--primary-green);
+        transition: width 0.4s ease-in-out;
+        z-index: 0;
+    }
+
+    .category-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .category-card.selected {
+        transform: scale(1.08);
+        box-shadow: var(--shadow-heavy);
+        border: 2px solid var(--accent-green);
+    }
+
+    .category-card.selected::before {
+        width: 100%;
+    }
+
+    .category-card.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        filter: grayscale(50%);
+    }
+
+    .category-card.no-games {
+        opacity: 0.4;
+        cursor: not-allowed;
+        filter: grayscale(80%);
+        border: 2px solid #ff6b6b;
+    }
+
+    .category-card.no-games .availability-circle {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+    }
+
+    .category-card.no-games .availability-circle:hover {
+        box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4);
+    }
+
+    .category-card.disabled:hover {
+        transform: none;
+        box-shadow: var(--shadow-light);
+    }
+
+    .category-card.disabled .category-checkbox,
+    .category-card.disabled .category-info,
+    .category-card.disabled .category-favorite {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .category-card.disabled .category-info:hover,
+    .category-card.disabled .category-favorite:hover {
+        transform: none;
+    }
+
+    .category-checkbox {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 3;
+    }
+
+    .category-card.selected .category-info {
+        color: #888;
+        background: none;
+    }
+
+    .category-card.selected .category-info .fas {
+        color: var(--primary-purple) !important;
+    }
+
+    .category-card.selected .category-info:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .category-info:focus,
+    .category-favorite:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    .category-card.selected .category-info:focus {
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.3);
+    }
+
+    .form-check-input {
+        width: 1.4rem;
+        height: 1.4rem;
+        cursor: pointer;
+        background-color: var(--white);
+        border: 3px solid var(--accent-green);
+        border-radius: 0.3rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--accent-green);
+        border-color: var(--accent-green);
+        transform: scale(1.1);
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+    }
+
+    /* Random buttons styling */
+    .random-btns-group {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 3rem 0;
+    }
+
+    .random-btn {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: 1.5rem;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-light);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .random-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .random-btn:hover::before {
+        left: 100%;
+    }
+
+    .random-btn:hover:not(:disabled) {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .random-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .complete-random-btn {
+        background: linear-gradient(135deg, var(--accent-green) 0%, #45a049 100%);
+    }
+
+    .all-random-btn {
+        background: var(--gradient-primary);
+    }
+
+    .clear-btn {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+    }
+
+    /* Session setup section styling */
+    .session-setup-section {
+        background: var(--gradient-secondary);
+        border-radius: 2.5rem;
+        padding: 3rem;
+        margin-top: 3rem;
+        border: 3px solid rgba(108, 63, 197, 0.15);
+        box-shadow: var(--shadow-medium);
+        backdrop-filter: blur(10px);
+    }
+
+    .session-setup-section .form-group label {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        display: block;
+        color: var(--primary-purple);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .session-setup-section .session-input {
+        border-radius: 1.5rem;
+        border: 3px solid var(--primary-purple);
+        padding: 1.2rem;
+        font-size: 1.3rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: white;
+        box-shadow: var(--shadow-light);
+    }
+
+    .session-setup-section .session-input:focus {
+        outline: none;
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 5px rgba(10, 106, 78, 0.15);
+        transform: translateY(-3px);
+    }
+
+    .session-setup-section .session-input::placeholder {
+        color: #999;
+        font-weight: 500;
+    }
+
+    .team-inputs-row {
+        display: flex;
+        gap: 3rem;
+        justify-content: center;
+        align-items: center;
+        margin: 2rem 0;
+    }
+
+    .team-input-col {
+        flex: 1;
+        max-width: 350px;
+    }
+
+    .session-setup-section .start-game-btn {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: 2.5rem;
+        padding: 1.5rem 5rem;
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-medium);
+        margin-top: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .session-setup-section .start-game-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.6s;
+    }
+
+    .session-setup-section .start-game-btn:hover::before {
+        left: 100%;
+    }
+
+    .session-setup-section .start-game-btn:hover:not(:disabled) {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .session-setup-section .start-game-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Notification styling */
+    .category-notification {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+        color: white;
+        padding: 2rem 3rem;
+        border-radius: 2rem;
+        font-weight: bold;
+        font-size: 1.2rem;
+        z-index: 1000;
+        box-shadow: var(--shadow-heavy);
+        animation: slideIn 0.4s ease;
+        border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .notification-timer-bar {
+        height: 4px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 2px;
+        margin-top: 1rem;
+        animation: timerBar 3s linear;
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.7);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+    }
+    }
+
+    @@keyframes timerBar {
+        from { width: 100%; }
+        to { width: 0%; }
+    }
+
+    /* Favorites layout empty state */
+    .favorites-layout .text-center {
+        padding: 4rem 2rem;
+        background: var(--gradient-secondary);
+        border-radius: 2rem;
+        border: 2px solid rgba(108, 63, 197, 0.1);
+    }
+
+    .favorites-layout .text-center i {
+        color: var(--primary-purple);
+        opacity: 0.6;
+    }
+
+    .favorites-layout .text-center h5 {
+        color: var(--primary-purple);
+        font-weight: bold;
+        margin: 1.5rem 0 1rem 0;
+    }
+
+    .favorites-layout .text-center p {
+        color: #666;
+        font-size: 1.1rem;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 1400px) {
+        .categories-grid {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+        }
+    }
+
+    @@media (max-width: 1200px) {
+        .categories-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .category-card {
+            height: 220px;
+        }
+
+        .category-image-wrapper-for-info {
+            height: 140px;
+        }
+
+        .category-image {
+            height: 140px;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .categories-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .team-inputs-row {
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .team-input-col {
+            max-width: 100%;
+        }
+
+        .session-setup-section {
+            padding: 2rem;
+        }
+
+        .session-setup-section .start-game-btn {
+            padding: 1.2rem 3rem;
+            font-size: 1.6rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .container {
+            padding: 1rem 0.5rem;
+        }
+
+        h3 {
+            font-size: 2.5rem;
+        }
+
+        .categories-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .category-card {
+            height: 200px;
+            padding: 0.75rem;
+        }
+
+        .category-image-wrapper-for-info {
+            height: 120px;
+        }
+
+        .category-image {
+            height: 120px;
+        }
+
+        .category-title {
+            font-size: 1rem;
+        }
+
+        .random-btns-group {
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .random-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .layout-selector .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+
+        .category-group-title {
+            font-size: 1.5rem;
+        }
+
+        .session-setup-section .form-group label {
+            font-size: 1.5rem;
+        }
+
+        .session-setup-section .session-input {
+            padding: 1rem;
+            font-size: 1.1rem;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .categories-grid {
+            grid-template-columns: repeat(1, 1fr);
+            gap: 1rem;
+        }
+
+        .category-card {
+            height: 180px;
+    }
+
+        .category-image-wrapper-for-info {
+            height: 100px;
+        }
+
+        .category-image {
+            height: 100px;
+        }
+
+        .category-info,
+        .category-favorite {
+            width: 35px;
+            height: 35px;
+        }
+
+        .category-info .fas {
+            font-size: 1.3rem !important;
+        }
+
+        .category-favorite .fas {
+            font-size: 1.1rem;
+        }
+
+        .mini-category-card {
+            width: 80px;
+            height: 80px;
+        }
+
+        .mini-category-image-wrapper {
+            width: 40px;
+            height: 40px;
+        }
+
+        .session-setup-section {
+            padding: 1.5rem;
+            margin-top: 2rem;
+    }
+
+        .session-setup-section .start-game-btn {
+            padding: 1rem 2rem;
+            font-size: 1.4rem;
+        }
+    }
+
+    /* Loading spinner styling */
+    .spinner-border {
+        color: var(--primary-purple);
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* Text danger styling */
+    .text-danger {
+        color: #ff6b6b !important;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    /* Focus styles for accessibility */
+    .btn:focus,
+    .form-control:focus,
+    .form-check-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(108, 63, 197, 0.3);
+    }
+
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--gradient-primary);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-green);
+    }
+
+    .categories-grid-center {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    .categories-grid {
+        min-width: 0;
+    }
+</style>
+
+@code {
+    private List<SelectableCategory>? categories;
+    private List<Group>? groups;
+    private List<FavoriteCategory>? favoriteCategories;
+    private string sessionName = "";
+    private string team1 = "";
+    private string team2 = "";
+    private string? errorMessage;
+    private bool showValidation = false;
+    private bool showSessionNameValidation = false;
+    private bool showTeam1Validation = false;
+    private bool showTeam2Validation = false;
+    private bool showCategoryNotification = false;
+    private bool IsCreating = false;
+    private LayoutType currentLayout = LayoutType.AllTogether;
+    private Dictionary<int, bool> groupExpandedStates = new();
+    private bool showAllGroupsActive = true; // Default to show all
+
+    public enum LayoutType
+    {
+        Groups,
+        AllTogether,
+        Favorites
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+    }
+
+    private async Task LoadData()
+    {
+        Console.WriteLine("🔄 Starting LoadData...");
+        
+        // Load categories with availability information
+        Console.WriteLine("📋 Loading categories with availability from service...");
+        var categoriesAvailability = await SessionService.GetCategoriesAvailabilityAsync();
+        Console.WriteLine($"📋 Categories availability loaded: {categoriesAvailability?.Count ?? 0}");
+        
+        categories = categoriesAvailability?.Select(SelectableCategory.FromCategoryAvailability).ToList() ?? new List<SelectableCategory>();
+        Console.WriteLine($"📋 Processed categories: {categories?.Count ?? 0}");
+
+        // Load groups
+        Console.WriteLine("📊 Loading groups from service...");
+        groups = await SessionService.GetAllGroupsAsync();
+        Console.WriteLine($"📊 Groups loaded: {groups?.Count ?? 0}");
+
+        // Load favorites
+        Console.WriteLine("⭐ Loading favorites...");
+        favoriteCategories = await FavoritesService.GetFavoritesAsync();
+        Console.WriteLine($"⭐ Favorites loaded: {favoriteCategories?.Count ?? 0}");
+
+        // Set IsFavorite property for each category based on favorites
+        if (categories != null && favoriteCategories != null)
+        {
+            var favoriteIds = favoriteCategories.Select(f => f.Id).ToHashSet();
+            foreach (var category in categories)
+            {
+                category.IsFavorite = favoriteIds.Contains(category.Id);
+            }
+            Console.WriteLine($"⭐ Updated IsFavorite for {categories.Count(c => c.IsFavorite)} categories");
+        }
+
+        // Initialize group expanded states
+        foreach (var group in groups ?? new List<Group>())
+        {
+            groupExpandedStates[group.Id] = true; // Default to expanded
+        }
+        
+        Console.WriteLine("✅ LoadData completed");
+    }
+
+    private void ToggleGroupExpansion(int groupId)
+    {
+        if (groupExpandedStates.ContainsKey(groupId))
+        {
+            groupExpandedStates[groupId] = !groupExpandedStates[groupId];
+            }
+            else
+            {
+            groupExpandedStates[groupId] = true;
+        }
+        StateHasChanged();
+    }
+
+    private void ToggleAllGroups(bool expand)
+    {
+        if (groups != null)
+        {
+            foreach (var group in groups)
+            {
+                groupExpandedStates[group.Id] = expand;
+            }
+            // Also handle ungrouped categories
+            groupExpandedStates[-1] = expand;
+        }
+        showAllGroupsActive = expand;
+        StateHasChanged();
+    }
+
+    private async Task AddToFavorites(SelectableCategory category)
+    {
+        await FavoritesService.AddToFavoritesAsync(category);
+        category.IsFavorite = true;
+        favoriteCategories = await FavoritesService.GetFavoritesAsync();
+        StateHasChanged();
+    }
+
+    private async Task RemoveFromFavorites(int categoryId)
+    {
+        await FavoritesService.RemoveFromFavoritesAsync(categoryId);
+        var cat = categories?.FirstOrDefault(c => c.Id == categoryId);
+        if (cat != null) cat.IsFavorite = false;
+        favoriteCategories = await FavoritesService.GetFavoritesAsync();
+        StateHasChanged();
+    }
+
+    private async Task<bool> IsFavorite(int categoryId)
+    {
+        return await FavoritesService.IsFavoriteAsync(categoryId);
+    }
+
+    private int GetSelectedCount()
+    {
+        return categories?.Count(c => c.IsSelected) ?? 0;
+    }
+
+    private bool CanCreateSession()
+    {
+        return GetSelectedCount() == 6 && 
+               !string.IsNullOrWhiteSpace(sessionName) && 
+               !string.IsNullOrWhiteSpace(team1) &&
+               !string.IsNullOrWhiteSpace(team2);
+    }
+
+    private bool CanCompleteWithRandom()
+    {
+        var selectedCount = GetSelectedCount();
+        return selectedCount > 0 && selectedCount < 6 && categories != null;
+    }
+
+    private bool CanSelectRandom()
+    {
+        return categories != null && categories.Any();
+    }
+
+    private void ClearSelection()
+    {
+        if (categories != null)
+        {
+        foreach (var category in categories)
+        {
+            category.IsSelected = false;
+        }
+        }
+        StateHasChanged();
+    }
+
+    private void CompleteWithRandom()
+    {
+        if (categories == null) return;
+
+        var selectedCount = GetSelectedCount();
+        var neededCount = 6 - selectedCount;
+        var remainingCategories = categories.Where(c => !c.IsSelected).ToList();
+
+        var random = new Random();
+        for (int i = 0; i < neededCount && remainingCategories.Any(); i++)
+        {
+            var index = random.Next(remainingCategories.Count);
+            var category = remainingCategories[index];
+            category.IsSelected = true;
+            remainingCategories.RemoveAt(index);
+        }
+
+        StateHasChanged();
+    }
+
+    private void SelectRandomCategories()
+    {
+        if (categories == null) return;
+
+        ClearSelection();
+        var random = new Random();
+        var shuffledCategories = categories.OrderBy(x => random.Next()).Take(6).ToList();
+
+        foreach (var category in shuffledCategories)
+        {
+            category.IsSelected = true;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task CreateSession()
+    {
+        Console.WriteLine("🚀 Starting session creation...");
+        showValidation = true;
+        showSessionNameValidation = true;
+        showTeam1Validation = true;
+        showTeam2Validation = true;
+        
+        if (!CanCreateSession())
+        {
+            Console.WriteLine("❌ CanCreateSession returned false");
+            if (GetSelectedCount() != 6)
+            {
+                await ShowCategoryNotification();
+            }
+            return;
+        }
+
+        Console.WriteLine("✅ Basic validation passed, checking categories...");
+
+        // Validate that selected categories have enough questions
+        var selectedCategories = categories.Where(c => c.IsSelected).ToList();
+        Console.WriteLine($"📋 Selected {selectedCategories.Count} categories");
+        
+        var validationResult = await ValidateSelectedCategories(selectedCategories);
+        Console.WriteLine($" Validation result: {validationResult.IsValid}, Message: {validationResult.Message}");
+        
+        if (!validationResult.IsValid)
+        {
+            Console.WriteLine("❌ Category validation failed");
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "فئات غير صالحة",
+                text = validationResult.Message,
+                icon = "warning",
+                confirmButtonText = "حسناً"
+            });
+            return;
+        }
+
+        Console.WriteLine("✅ Category validation passed, creating session...");
+
+        try
+        {
+            IsCreating = true;
+            var selectedCategoryIds = selectedCategories.Select(c => c.Id).ToList();
+            Console.WriteLine($"📝 Category IDs: [{string.Join(", ", selectedCategoryIds)}]");
+            
+            var request = new CreateSessionRequest
+            {
+                SessionName = sessionName,
+                Team1 = team1,
+                Team2 = team2,
+                CategoryIds = selectedCategoryIds
+            };
+            
+            Console.WriteLine($"📤 Sending request: SessionName={request.SessionName}, Team1={request.Team1}, Team2={request.Team2}");
+            
+            var (success, error, sessionId) = await SessionService.CreateSessionAsync(request);
+            
+            Console.WriteLine($"📥 Response: Success={success}, Error={error}, SessionId={sessionId}");
+
+            if (success && sessionId.HasValue)
+            {
+                Console.WriteLine($"✅ Session created successfully, redirecting to gameboard/{sessionId.Value}");
+                GameState.SessionId = sessionId.Value;
+                GameState.SessionName = sessionName;
+                GameState.Team1 = team1;
+                GameState.Team2 = team2;
+                GameState.CurrentTurn = team1; // Set initial turn to team1
+                NavManager.NavigateTo($"/gameboard/{sessionId.Value}");
+            }
+            else
+            {
+                Console.WriteLine($"❌ Session creation failed: {error}");
+                
+                // Check if this is a repository validation error (contains "doesn't have enough available questions")
+                if (error != null && error.Contains("don't have enough available questions"))
+                {
+                    // Extract the category names from the error message
+                    var startIndex = error.IndexOf("Categories ") + 11; // Length of "Categories "
+                    var endIndex = error.IndexOf(" don't have enough available questions");
+                    var categoriesText = error.Substring(startIndex, endIndex - startIndex);
+                    var categoryNames = categoriesText.Split(", ");
+                    
+                    await JS.InvokeVoidAsync("Swal.fire", new
+                    {
+                        title = "فئات غير صالحة",
+                        text = $"الفئات التالية لا تحتوي على أسئلة كافية متاحة:\n{string.Join("\n- ", categoryNames)}",
+                        icon = "warning",
+                        confirmButtonText = "حسناً",
+                        timer = 5000, // 5 seconds
+                        timerProgressBar = true
+                    });
+                }
+                else
+                {
+                    errorMessage = error ?? "Failed to create session";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"💥 Exception during session creation: {ex.Message}");
+            errorMessage = $"Error creating session: {ex.Message}";
+            Console.Error.WriteLine($"Error creating session: {ex}");
+        }
+        finally
+        {
+            IsCreating = false;
+        }
+    }
+
+    private async Task<CategoryValidationResult> ValidateSelectedCategories(List<SelectableCategory> selectedCategories)
+    {
+        Console.WriteLine($"🔍 Starting validation for {selectedCategories.Count} categories");
+        try
+        {
+            var invalidCategories = new List<string>();
+
+            foreach (var category in selectedCategories)
+            {
+                Console.WriteLine($"🔍 Validating category: {category.Name} (ID: {category.Id})");
+                Console.WriteLine($"📊 Category {category.Name}: {category.AvailableGames} games available");
+                Console.WriteLine($"📊 Category {category.Name}: Easy={category.EasyQuestionsAvailable}, Medium={category.MediumQuestionsAvailable}, Hard={category.HardQuestionsAvailable}");
+                
+                // Check if category has at least 1 available game
+                if (category.AvailableGames < 1)
+                {
+                    Console.WriteLine($"❌ Category {category.Name} has no available games");
+                    invalidCategories.Add($"{category.Name} (لا توجد ألعبة متاحة)");
+                }
+            }
+
+            Console.WriteLine($"📊 Total available games across all categories: {selectedCategories.Sum(c => c.AvailableGames)}");
+
+            if (invalidCategories.Any())
+            {
+                Console.WriteLine($"❌ Found {invalidCategories.Count} invalid categories");
+                return new CategoryValidationResult
+                {
+                    IsValid = false,
+                    Message = $"الفئات التالية لا تحتوي على ألعبة متاحة:\n{string.Join("\n", invalidCategories)}"
+                };
+            }
+
+            Console.WriteLine($"✅ All categories are valid");
+            return new CategoryValidationResult
+            {
+                IsValid = true,
+                Message = "جميع الفئات صالحة"
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"💥 Exception during validation: {ex.Message}");
+            return new CategoryValidationResult
+            {
+                IsValid = false,
+                Message = $"خطأ في التحقق من الفئات: {ex.Message}"
+            };
+        }
+    }
+
+    public class CategoryValidationResult
+    {
+        public bool IsValid { get; set; }
+        public string Message { get; set; }
+    }
+
+    private async Task ShowCategoryDescription(int categoryId, string categoryName)
+    {
+        try
+        {
+            var category = await SessionService.GetCategoryByIdAsync(categoryId);
+            if (category != null)
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    title = categoryName,
+                    text = category.Description,
+                    icon = "info",
+                    confirmButtonText = "Close"
+                });
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("Swal.fire", "Error", "Could not retrieve category description.", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error showing category description: {ex}");
+            await JS.InvokeVoidAsync("Swal.fire", "Error", $"Failed to load description: {ex.Message}", "error");
+        }
+    }
+
+    private async Task ShowCategoryNotification()
+    {
+        showCategoryNotification = true;
+        StateHasChanged();
+        await Task.Delay(3000); // 3 seconds
+        showCategoryNotification = false;
+        StateHasChanged();
+    }
+
+    private async Task SwitchLayout(LayoutType layout)
+    {
+        Console.WriteLine($"🔄 Switching to layout: {layout}");
+        Console.WriteLine($"📊 Categories count: {categories?.Count ?? 0}");
+        
+        currentLayout = layout;
+        
+        if (layout == LayoutType.Favorites)
+        {
+            Console.WriteLine("⭐ Loading favorites...");
+            favoriteCategories = await FavoritesService.GetFavoritesAsync();
+            Console.WriteLine($"⭐ Favorites count: {favoriteCategories?.Count ?? 0}");
+            
+            // Update IsFavorite property when switching to favorites layout
+            if (categories != null && favoriteCategories != null)
+            {
+                var favoriteIds = favoriteCategories.Select(f => f.Id).ToHashSet();
+                foreach (var category in categories)
+                {
+                    category.IsFavorite = favoriteIds.Contains(category.Id);
+                }
+                Console.WriteLine($"⭐ Updated IsFavorite for {categories.Count(c => c.IsFavorite)} categories");
+            }
+        }
+        else if (layout == LayoutType.AllTogether)
+        {
+            Console.WriteLine("📋 All Together layout selected");
+            Console.WriteLine($"📋 Categories available: {categories?.Count ?? 0}");
+            if (categories != null)
+            {
+                foreach (var cat in categories.Take(5)) // Show first 5 for debugging
+                {
+                    Console.WriteLine($"📋 Category: {cat.Name} (ID: {cat.Id})");
+                }
+            }
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task ToggleFavorite(SelectableCategory category)
+    {
+        if (category.IsFavorite)
+            await RemoveFromFavorites(category.Id);
+        else
+            await AddToFavorites(category);
+    }
+}

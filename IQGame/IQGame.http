@@ -1,0 +1,6 @@
+@IQGame_HostAddress = http://localhost:5132
+
+GET {{IQGame_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

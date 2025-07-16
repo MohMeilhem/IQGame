@@ -1,0 +1,204 @@
+﻿@model IQGame.Admin.Models.EditAnswerModel
+
+@{
+    ViewData["Title"] = "Edit";
+    var apiBaseUrl = "https://localhost:7187";
+}
+
+<h1>Edit Answer</h1>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <h4>Validation Errors:</h4>
+        <ul>
+            @foreach (var modelState in ViewData.ModelState.Values)
+            {
+                foreach (var error in modelState.Errors)
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            }
+        </ul>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit" enctype="multipart/form-data" method="post" id="editAnswerForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" name="returnQuestionId" value="@ViewData["ReturnQuestionId"]" />
+            <input type="hidden" name="returnCorrectness" value="@ViewData["ReturnCorrectness"]" />
+            <input type="hidden" name="returnCategoryId" value="@ViewData["ReturnCategoryId"]" />
+
+            <div class="form-group mb-3">
+                <label asp-for="Text" class="control-label">Answer Text</label>
+                <input asp-for="Text" class="form-control" />
+                <span asp-validation-for="Text" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Current Image</label>
+                <p class="text-muted">Image will be preserved unless a new one is uploaded</p>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Upload New Image</label>
+                <input type="file" name="ImageFile" class="form-control" accept="image/*" id="imageFile" />
+                <small class="text-muted">Leave empty to keep current image</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="IsCorrect" type="checkbox" />
+                    <label class="form-check-label" asp-for="IsCorrect">Is Correct Answer</label>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="difficultyFilter" class="control-label">Filter by Difficulty</label>
+                <select id="difficultyFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="1">Easy</option>
+                    <option value="2">Medium</option>
+                    <option value="3">Hard</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="QuestionId" class="control-label">Question</label>
+                <select asp-for="QuestionId" class="form-select" asp-items="ViewBag.QuestionId" id="questionSelect">
+                    <option value="">-- Select a Question --</option>
+                </select>
+                <span asp-validation-for="QuestionId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary" id="submitBtn">Save Changes</button>
+                <a asp-action="Index" asp-route-questionId="@ViewData["ReturnQuestionId"]" asp-route-isCorrect="@ViewData["ReturnCorrectness"]" asp-route-categoryId="@ViewData["ReturnCategoryId"]" class="btn btn-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Store the original selected value
+        var originalSelectedValue = document.getElementById('questionSelect').value;
+        console.log('Original selected value:', originalSelectedValue);
+        
+        // Simple filtering without interfering with form submission
+        document.getElementById('difficultyFilter').addEventListener('change', function() {
+            var selected = this.value;
+            var select = document.getElementById('questionSelect');
+            var currentValue = select.value;
+            
+            console.log('Difficulty filter changed to:', selected);
+            console.log('Current question value:', currentValue);
+            
+            // Show all options first
+            for (var i = 0; i < select.options.length; i++) {
+                select.options[i].style.display = '';
+            }
+            
+            if (selected && selected !== '') {
+                for (var i = 0; i < select.options.length; i++) {
+                    var opt = select.options[i];
+                    if (opt.value === '') {
+                        // Always show the placeholder option
+                        continue;
+                    }
+                    
+                    // Check if option text contains the difficulty
+                    var text = opt.textContent || opt.innerText;
+                    if ((selected === '1' && text.toLowerCase().includes('easy')) ||
+                        (selected === '2' && text.toLowerCase().includes('medium')) ||
+                        (selected === '3' && text.toLowerCase().includes('hard'))) {
+                        opt.style.display = '';
+                    } else {
+                        opt.style.display = 'none';
+                    }
+                }
+            }
+            
+            // If the current value is hidden, reset to original or first visible
+            if (currentValue && currentValue !== '') {
+                var selectedOption = select.querySelector('option[value="' + currentValue + '"]');
+                if (selectedOption && selectedOption.style.display === 'none') {
+                    console.log('Selected option is hidden, resetting to original value');
+                    if (originalSelectedValue && originalSelectedValue !== '') {
+                        var originalOption = select.querySelector('option[value="' + originalSelectedValue + '"]');
+                        if (originalOption && originalOption.style.display !== 'none') {
+                            select.value = originalSelectedValue;
+                        } else {
+                            // Find first visible option
+                            for (var i = 0; i < select.options.length; i++) {
+                                if (select.options[i].style.display !== 'none' && select.options[i].value !== '') {
+                                    select.value = select.options[i].value;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Ensure form validation works properly
+        document.getElementById('editAnswerForm').addEventListener('submit', function(e) {
+            var questionSelect = document.getElementById('questionSelect');
+            var selectedValue = questionSelect.value;
+            var imageFile = document.getElementById('imageFile');
+            
+            console.log('Form submission - QuestionId:', selectedValue);
+            console.log('Form submission - ImageFile:', imageFile.files.length > 0 ? imageFile.files[0].name : 'No file selected');
+            
+            // If no question is selected, prevent submission
+            if (!selectedValue || selectedValue === '') {
+                e.preventDefault();
+                alert('Please select a question.');
+                return false;
+            }
+            
+            // Ensure the selected option is visible and valid
+            var selectedOption = questionSelect.querySelector('option[value="' + selectedValue + '"]');
+            if (!selectedOption) {
+                e.preventDefault();
+                alert('Please select a valid question.');
+                return false;
+            }
+            
+            if (selectedOption.style.display === 'none') {
+                e.preventDefault();
+                alert('Please select a valid question from the filtered list.');
+                return false;
+            }
+            
+            // Log all form data before submission
+            var formData = new FormData(this);
+            console.log('Form data before submission:');
+            for (var pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+            
+            console.log('Form validation passed, submitting...');
+        });
+        
+        // Debug: Log form data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded - QuestionId:', document.getElementById('questionSelect').value);
+            console.log('Page loaded - Form action:', document.getElementById('editAnswerForm').action);
+            console.log('Page loaded - Form enctype:', document.getElementById('editAnswerForm').enctype);
+            
+            // Test form submission
+            document.getElementById('submitBtn').addEventListener('click', function(e) {
+                console.log('Submit button clicked');
+                var questionSelect = document.getElementById('questionSelect');
+                console.log('QuestionId at submit click:', questionSelect.value);
+                console.log('QuestionId selected option:', questionSelect.options[questionSelect.selectedIndex]);
+            });
+        });
+    </script>
+}

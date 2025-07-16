@@ -1,0 +1,740 @@
+@page "/sessions"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject SessionService SessionService
+@inject IJSRuntime JS
+
+<div class="container d-flex flex-column align-items-center">
+    <div class="text-center mb-4">
+        <h3 class="resume-title">إكمال جلسة</h3>
+    </div>
+
+    <div class="session-setup-section w-100" style="margin-top: 2rem;">
+        @if (isLoading)
+        {
+            <div class="loading-overlay">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">جاري التحميل...</span>
+                </div>
+                <span>جاري التحميل...</span>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(error))
+        {
+            <div class="alert alert-danger">@error</div>
+        }
+        else if (sessions.Count == 0)
+        {
+            <div class="no-sessions-container">
+                <div class="no-sessions-icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="no-sessions-title">لا توجد جلسات متاحة</div>
+                <div class="no-sessions-subtitle">قم بإنشاء جلسة جديدة للبدء في اللعب</div>
+                <button class="create-session-btn" @onclick="NavigateToHome">
+                    <i class="fas fa-plus"></i>
+                    إنشاء جلسة جديدة
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="sessions-grid">
+                @foreach (var session in sessions)
+                {
+                    <div class="session-card">
+                        <div class="categories-mini-grid" style="flex-direction: column; gap: 0.3rem;">
+                            <div class="mini-row" style="display: flex; justify-content: center; gap: 0.3rem;">
+                                @for (int i = 0; i < 3; i++)
+                                {
+                                    var cat = session.Categories.ElementAtOrDefault(i);
+                                    if (cat != null)
+                                    {
+                                        <div class="mini-category-card">
+                                            <div class="mini-category-image-wrapper">
+                                                <img src="@cat.CategoryImageUrl" alt="@cat.CategoryName" class="mini-category-image" @onerror="(e) => HandleImageError(e, cat)" />
+                                            </div>
+                                            <div class="mini-category-name">@cat.CategoryName</div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="mini-category-card" style="opacity:0.3;"></div>
+                                    }
+                                }
+                            </div>
+                            <div class="mini-row" style="display: flex; justify-content: center; gap: 0.3rem;">
+                                @for (int i = 3; i < 6; i++)
+                                {
+                                    var cat = session.Categories.ElementAtOrDefault(i);
+                                    if (cat != null)
+                                    {
+                                        <div class="mini-category-card">
+                                            <div class="mini-category-image-wrapper">
+                                                <img src="@cat.CategoryImageUrl" alt="@cat.CategoryName" class="mini-category-image" @onerror="(e) => HandleImageError(e, cat)" />
+                                            </div>
+                                            <div class="mini-category-name">@cat.CategoryName</div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="mini-category-card" style="opacity:0.3;"></div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="session-name-row">
+                            <span>@session.SessionName</span>
+                        </div>
+                        <div class="session-buttons-row">
+                            <button class="random-btn clear-btn" @onclick="() => ShowResetModal(session)">
+                                <i class="fas fa-redo"></i> إعادة تعيين
+                            </button>
+                            <button class="random-btn resume-btn" @onclick="() => ResumeSession(session.SessionId)">
+                                <i class="fas fa-play"></i> إكمال
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Reset Modal -->
+    @if (showResetModal)
+    {
+        <div class="modal-overlay" @onclick="CloseResetModal">
+            <div class="modal-content" @onclick:stopPropagation="true" style="background: var(--gradient-primary); border-radius: 2rem; max-width: 430px; width: 98%; padding: 2.5rem 2rem 2rem 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.13);">
+                <div class="modal-header" style="border-bottom: none; padding-bottom: 0; justify-content: center;">
+                    <h4 style="font-weight: bold; color: #fff; text-align: center; width: 100%;">اسم الجلسة</h4>
+                    <button class="modal-close" @onclick="CloseResetModal" style="position: absolute; left: 1.5rem; top: 1.5rem; color: #fff;">×</button>
+                </div>
+                <div class="modal-body" style="padding: 0; margin-top: 1.2rem;">
+                    <div class="form-group text-center" style="margin-bottom: 2.2rem;">
+                        <input class="form-control session-input" style="font-size: 1.25rem; border-radius: 1.2rem; padding: 1.1rem; text-align: center;" @bind="resetSessionName" placeholder="اسم اللعبة" />
+                    </div>
+                    <div class="team-inputs-row mb-4 w-100" style="display: flex; gap: 1.5rem; justify-content: center;">
+                        <div class="team-input-col" style="flex: 1;">
+                            <div class="form-group text-center">
+                                <label style="font-weight: bold; color: #fff; margin-bottom: 0.5rem;">الفريق الثاني</label>
+                                <input class="form-control session-input" style="border-radius: 1.2rem; padding: 1.1rem; text-align: center; font-size: 1.1rem;" @bind="resetTeam2Name" placeholder="اسم الفريق" />
+                            </div>
+                        </div>
+                        <div class="team-input-col" style="flex: 1;">
+                            <div class="form-group text-center">
+                                <label style="font-weight: bold; color: #fff; margin-bottom: 0.5rem;">الفريق الأول</label>
+                                <input class="form-control session-input" style="border-radius: 1.2rem; padding: 1.1rem; text-align: center; font-size: 1.1rem;" @bind="resetTeam1Name" placeholder="اسم الفريق" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="justify-content: center; border: none; padding: 0; margin-top: 1.5rem;">
+                    <button class="start-game-btn reset-modal-btn" style="width: 100%; font-size: 2rem; border-radius: 2.5rem; padding: 1.1rem 0; background: #0A6A4E; color: #fff; transition: background 0.2s, transform 0.2s; font-weight: bold;" @onclick="ResetSession" disabled="@isResetting">
+                        @if (isResetting)
+                        {
+                            <span>جاري الإعادة تعيين...</span>
+                        }
+                        else
+                        {
+                            <span>ابدأ اللعب</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+<div style="padding-top: 2rem;"></div>
+<Footer />
+
+<style>
+    /* CSS Variables for consistent theming */
+    :root {
+        --primary-purple: #6c3fc5;
+        --primary-green: #0A6A4E;
+        --accent-green: #4CAF50;
+        --white: #ffffff;
+        --light-gray: #f8f9fa;
+        --dark-gray: #343a40;
+        --shadow-light: 0 2px 8px rgba(0,0,0,0.1);
+        --shadow-medium: 0 4px 16px rgba(0,0,0,0.15);
+        --shadow-heavy: 0 8px 25px rgba(0,0,0,0.2);
+        --gradient-primary: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        --gradient-secondary: linear-gradient(135deg, rgba(108, 63, 197, 0.1) 0%, rgba(10, 106, 78, 0.1) 100%);
+    }
+    /* Global container styling */
+    .container {
+        max-width: 1400px;
+        padding: 2rem 1rem 0 1rem;
+        background: linear-gradient(135deg, rgba(108, 63, 197, 0.02) 0%, rgba(10, 106, 78, 0.02) 100%);
+        min-height: calc(100vh - 70px); /* Subtract header height (70px) only */
+    }
+    .session-setup-section {
+        background: var(--gradient-secondary);
+        border-radius: 2.5rem;
+        padding: 3rem;
+        margin-top: 2rem;
+        border: 3px solid rgba(108, 63, 197, 0.15);
+        box-shadow: var(--shadow-medium);
+        backdrop-filter: blur(10px);
+    }
+    .resume-title {
+        font-size: 3rem;
+        font-weight: bold;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        margin-top: 3rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .sessions-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.2rem;
+        justify-content: center;
+        align-items: flex-start;
+    }
+    .session-card {
+        background: linear-gradient(90deg, var(--primary-purple, #6c3fc5) 0%, var(--primary-green, #0A6A4E) 100%);
+        border-radius: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+        padding: 1.2rem 1.2rem 1.2rem 1.2rem;
+        min-width: 300px;
+        max-width: 320px;
+        transition: transform 0.15s, box-shadow 0.15s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .session-card:hover {
+        transform: translateY(-6px) scale(1.03);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    }
+    .categories-mini-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 1.2rem;
+        width: 100%;
+        margin-bottom: 1.1rem;
+        min-height: 120px;
+    }
+    .mini-category-card {
+        position: relative;
+        background: linear-gradient(90deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        border-radius: 1.2rem;
+        padding: 0.3rem 0.3rem 0.7rem 0.3rem;
+        width: 80px;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        transition: box-shadow 0.3s, background 0.3s;
+        box-shadow: 0 2px 8px rgba(108,63,197,0.10);
+        border: 2.5px solid var(--accent-green);
+        margin: 0 0.3rem;
+    }
+    .mini-category-card:hover {
+        box-shadow: 0 4px 16px rgba(108,63,197,0.18);
+    }
+    .mini-category-image-wrapper {
+        width: 64px;
+        height: 94px;
+        background: transparent;
+        border-radius: 0.7rem;
+        margin-bottom: 0.2rem;
+        margin-top: 0.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 4px rgba(108,63,197,0.08);
+        border: 2px solid rgba(108, 63, 197, 0.10);
+        overflow: hidden;
+    }
+    .mini-category-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0.7rem;
+    }
+    .mini-category-name {
+        color: white;
+        font-size: 0.78rem;
+        font-weight: bold;
+        text-align: center;
+        line-height: 1.2;
+        margin-top: 0.2rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    .session-name-row {
+        margin-top: 0.7rem;
+        width: 100%;
+        text-align: center;
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #fff;
+        letter-spacing: 1px;
+        background: rgba(0,0,0,0.10);
+        border-radius: 0.7rem;
+        padding: 0.5rem 0;
+        margin-bottom: 1rem;
+    }
+    .session-buttons-row {
+        width: 100%;
+        display: flex;
+        gap: 0.8rem;
+        justify-content: center;
+    }
+    .random-btn {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: 1.5rem;
+        padding: 0.8rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-light);
+        position: relative;
+        overflow: hidden;
+    }
+    .random-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    .random-btn:hover::before {
+        left: 100%;
+    }
+    .random-btn:hover:not(:disabled) {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-heavy);
+    }
+    .random-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .all-random-btn {
+        background: var(--gradient-primary);
+    }
+    .clear-btn {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+    }
+    .start-game-btn {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: 2.5rem;
+        padding: 1.5rem 5rem;
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-medium);
+        margin-top: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .start-game-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.6s;
+    }
+    .start-game-btn:hover::before {
+        left: 100%;
+    }
+    .start-game-btn:hover:not(:disabled) {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-heavy);
+    }
+    .start-game-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    /* Modal Styles (keep as is) */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background: #fff;
+        border-radius: 1rem;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 1.5rem 0 1.5rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+    }
+    .modal-header h4 {
+        margin: 0;
+        color: #333;
+        font-weight: bold;
+    }
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    .modal-close:hover {
+        background: #f0f0f0;
+    }
+    .modal-body {
+        padding: 1.5rem;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        color: #333;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.8rem;
+        border: 2px solid #ddd;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #6c3fc5;
+    }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding: 0 1.5rem 1.5rem 1.5rem;
+    }
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .btn-secondary {
+        background: #6c757d;
+        color: #fff;
+    }
+    .btn-secondary:hover:not(:disabled) {
+        background: #5a6268;
+    }
+    .btn-primary {
+        background: #6c3fc5;
+        color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) {
+        background: #5a2fa3;
+    }
+    .reset-modal-btn:hover {
+        background: #087a3d !important;
+        transform: scale(1.03);
+    }
+    .resume-btn {
+        background: linear-gradient(135deg, var(--accent-green) 0%, #45a049 100%) !important;
+        color: #fff !important;
+    }
+    .resume-btn:hover::before {
+        left: 100%;
+    }
+    .resume-btn:hover:not(:disabled) {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-heavy);
+    }
+    
+    /* No Sessions Styling */
+    .no-sessions-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
+        border-radius: 2rem;
+        border: 2px solid rgba(108, 63, 197, 0.1);
+        box-shadow: var(--shadow-light);
+        backdrop-filter: blur(10px);
+        margin: 2rem auto;
+        max-width: 500px;
+        min-height: 400px;
+    }
+    
+    .no-sessions-icon {
+        font-size: 4rem;
+        color: var(--primary-purple);
+        margin-bottom: 1.5rem;
+        opacity: 0.7;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @@keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .no-sessions-title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--dark-gray);
+        margin-bottom: 1rem;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .no-sessions-subtitle {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-bottom: 2.5rem;
+        line-height: 1.6;
+        max-width: 300px;
+    }
+    
+    .create-session-btn {
+        background: var(--gradient-primary);
+        color: white;
+        border: none;
+        border-radius: 2rem;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-medium);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 200px;
+        justify-content: center;
+    }
+    
+    .create-session-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-heavy);
+        background: linear-gradient(135deg, #5a2fa3 0%, #087a3d 100%);
+    }
+    
+    .create-session-btn:active {
+        transform: translateY(-1px);
+    }
+    
+    .create-session-btn i {
+        font-size: 1rem;
+    }
+</style>
+
+@code {
+    private List<SessionSummaryDto> sessions = new();
+    private bool isLoading = true;
+    private string error;
+    
+    // Reset modal state
+    private bool showResetModal = false;
+    private SessionSummaryDto selectedSession;
+    private string resetSessionName = "";
+    private string resetTeam1Name = "";
+    private string resetTeam2Name = "";
+    private bool isResetting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            var rawSessions = await Http.GetFromJsonAsync<List<SessionSummaryDto>>("api/sessions/all") ?? new();
+            
+            // Process image URLs like SessionService does
+            foreach (var session in rawSessions)
+            {
+                if (session.Categories != null)
+                {
+                    foreach (var category in session.Categories)
+                    {
+                        if (!string.IsNullOrEmpty(category.CategoryImageUrl) && !category.CategoryImageUrl.StartsWith("http"))
+                        {
+                            category.CategoryImageUrl = $"{Http.BaseAddress}{category.CategoryImageUrl.TrimStart('/')}";
+                        }
+                    }
+                }
+            }
+            
+            sessions = rawSessions;
+        }
+        catch (Exception ex)
+        {
+            error = $"خطأ في تحميل الجلسات: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ResumeSession(int sessionId)
+    {
+        NavManager.NavigateTo($"/gameboard/{sessionId}");
+    }
+
+    private void NavigateToHome()
+    {
+        NavManager.NavigateTo("/");
+    }
+
+    private void ShowResetModal(SessionSummaryDto session)
+    {
+        selectedSession = session;
+        resetSessionName = session.SessionName;
+        resetTeam1Name = session.Team1Name;
+        resetTeam2Name = session.Team2Name;
+        showResetModal = true;
+    }
+
+    private void CloseResetModal()
+    {
+        showResetModal = false;
+        selectedSession = null;
+        resetSessionName = "";
+        resetTeam1Name = "";
+        resetTeam2Name = "";
+    }
+
+    private async Task ResetSession()
+    {
+        if (string.IsNullOrWhiteSpace(resetSessionName) || 
+            string.IsNullOrWhiteSpace(resetTeam1Name) || 
+            string.IsNullOrWhiteSpace(resetTeam2Name))
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "خطأ",
+                text = "يرجى ملء جميع الحقول المطلوبة",
+                icon = "error",
+                confirmButtonText = "حسناً"
+            });
+            return;
+        }
+
+        try
+        {
+            isResetting = true;
+            var success = await SessionService.ResetSessionAsync(
+                selectedSession?.SessionId ?? 0, 
+                resetSessionName, 
+                resetTeam1Name, 
+                resetTeam2Name
+            );
+
+            if (success)
+            {
+                var sessionId = selectedSession?.SessionId ?? 0;
+                CloseResetModal();
+                if (sessionId != 0)
+                    NavManager.NavigateTo($"/gameboard/{sessionId}");
+                else
+                    await JS.InvokeVoidAsync("Swal.fire", new
+                    {
+                        title = "Error",
+                        text = "Could not determine the selected session.",
+                        icon = "error",
+                        confirmButtonText = "OK"
+                    });
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    title = "خطأ",
+                    text = "فشل في إعادة تعيين الجلسة",
+                    icon = "error",
+                    confirmButtonText = "حسناً"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                title = "خطأ",
+                text = $"حدث خطأ: {ex.Message}",
+                icon = "error",
+                confirmButtonText = "حسناً"
+            });
+        }
+        finally
+        {
+            isResetting = false;
+        }
+    }
+
+    private void HandleImageError(ErrorEventArgs e, CategorySummaryDto category)
+    {
+        // Use a simple fallback - could be a data URL or just hide the image
+        category.CategoryImageUrl = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRkZGRkZGIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8cGF0aCBkPSJNMTIgMTJIMjhWMjhIMTJWMjJaIiBmaWxsPSIjRkZGRkZGIiBmaWxsLW9wYWNpdHk9IjAuMyIvPgo8L3N2Zz4K";
+        StateHasChanged();
+    }
+
+    public class SessionSummaryDto
+    {
+        public int SessionId { get; set; }
+        public string SessionName { get; set; }
+        public List<CategorySummaryDto> Categories { get; set; }
+        public int TotalQuestions { get; set; }
+        public bool IsValid { get; set; }
+        public string Team1Name { get; set; }
+        public string Team2Name { get; set; }
+    }
+    
+    public class CategorySummaryDto
+    {
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; }
+        public string CategoryImageUrl { get; set; }
+    }
+} 

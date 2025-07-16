@@ -1,0 +1,546 @@
+﻿@page "/question/{QuestionId:int}"
+@layout GameLayout
+@using Microsoft.AspNetCore.Components
+@using IQGame.Application.Models.Session
+@using IQGame.Client.Services
+@using IQGame.Shared.Models
+@using System.Timers
+@inject SessionService SessionService
+@inject GameStateService GameState
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="question-view-page">
+    <GameHeader Title="@GameState.SessionName" OnSwitchTeam="SwitchTeam" />
+
+    <div class="question-view-body">
+            <div class="sidebar-panel">
+            <div class="teams-scores">
+                @if (Team1 != null && Team2 != null)
+                {
+                    <div class="team-score-card team-1 @(Team1.Name == GameState.CurrentTurn ? "active-team" : "")">
+                        @foreach (var anim in team1Animations)
+                        {
+                            <div class="score-animation @anim" style="animation-delay: @(anim == "score-up" ? "0s" : "0.1s");">
+                                @(anim == "score-up" ? "+50" : "-150")
+                            </div>
+                        }
+                        <h3 class="team-name">@Team1.Name</h3>
+                        <p class="team-score">@Team1.Score</p>
+                        <div class="team-help">
+                            @if (Team1.Name == GameState.CurrentTurn)
+                            {
+                                <div class="help-indicator @(Question.CategoryDisableMCQ ? "disabled" : (Team1.HelpTools?.KhiyaratUsed == true ? "used" : "available"))" 
+                                     @onclick="() => UseKhiyaratHelp(Team1.Name)" 
+                                     title="@(Question.CategoryDisableMCQ ? "MCQ غير متاح لهذا السؤال" : "خيارات")">
+                                    <img src="images/helptools/brain.png" alt="خيارات" class="help-icon" />
+                                    <span class="help-label">خيارات</span>
+                                </div>
+                                <div class="help-indicator @(Team1.HelpTools?.TwoAnswersUsed == true ? "used" : "available")" 
+                                     @onclick="() => UseTwoAnswersHelp(Team1.Name)" title="إجابتين">
+                                    <img src="images/helptools/peace.png" alt="إجابتين" class="help-icon" />
+                                    <span class="help-label">إجابتين</span>
+                                </div>
+                                <div class="help-indicator has-tooltip @(Team1.HelpTools?.DoublePointsUsed == true ? (Team1.HelpTools?.DoublePointsActive == true ? "active" : "used") : "available")" title="دبل">
+                                    <img src="images/helptools/target.png" alt="دبل" class="help-icon" />
+                                    <span class="help-label">دبل</span>
+                                    <span class="tooltip-text">يجب التفعيل في اللوحة فقط</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="help-indicator @(Question.CategoryDisableMCQ ? "disabled" : (Team1.HelpTools?.KhiyaratUsed == true ? "used" : "available"))" 
+                                     @onclick="() => UseKhiyaratHelp(Team1.Name)" 
+                                     title="@(Question.CategoryDisableMCQ ? "MCQ غير متاح لهذا السؤال" : "خيارات")">
+                                    <img src="images/helptools/brain.png" alt="خيارات" class="help-icon" />
+                                    <span class="help-label">خيارات</span>
+                                </div>
+                                <div class="help-indicator @(Team1.HelpTools?.TwoAnswersUsed == true ? "used" : "available")" 
+                                     @onclick="() => UseTwoAnswersHelp(Team1.Name)" title="إجابتين">
+                                    <img src="images/helptools/peace.png" alt="إجابتين" class="help-icon" />
+                                    <span class="help-label">إجابتين</span>
+                                </div>
+                                <div class="help-indicator has-tooltip @(Team1.HelpTools?.DoublePointsUsed == true ? (Team1.HelpTools?.DoublePointsActive == true ? "active" : "used") : "available")" title="دبل">
+                                    <img src="images/helptools/target.png" alt="دبل" class="help-icon" />
+                                    <span class="help-label">دبل</span>
+                                    <span class="tooltip-text">يجب التفعيل في اللوحة فقط</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="team-score-card team-2 @(Team2.Name == GameState.CurrentTurn ? "active-team" : "")">
+                        @foreach (var anim in team2Animations)
+                        {
+                            <div class="score-animation @anim" style="animation-delay: @(anim == "score-up" ? "0s" : "0.1s");">
+                                @(anim == "score-up" ? "+50" : "-150")
+                            </div>
+                        }
+                        <h3 class="team-name">@Team2.Name</h3>
+                        <p class="team-score">@Team2.Score</p>
+                        <div class="team-help">
+                            @if (Team2.Name == GameState.CurrentTurn)
+                            {
+                                <div class="help-indicator @(Question.CategoryDisableMCQ ? "disabled" : (Team2.HelpTools?.KhiyaratUsed == true ? "used" : "available"))" 
+                                     @onclick="() => UseKhiyaratHelp(Team2.Name)" 
+                                     title="@(Question.CategoryDisableMCQ ? "MCQ غير متاح لهذا السؤال" : "خيارات")">
+                                    <img src="images/helptools/brain.png" alt="خيارات" class="help-icon" />
+                                    <span class="help-label">خيارات</span>
+                                </div>
+                                <div class="help-indicator @(Team2.HelpTools?.TwoAnswersUsed == true ? "used" : "available")" 
+                                     @onclick="() => UseTwoAnswersHelp(Team2.Name)" title="إجابتين">
+                                    <img src="images/helptools/peace.png" alt="إجابتين" class="help-icon" />
+                                    <span class="help-label">إجابتين</span>
+                                </div>
+                                <div class="help-indicator has-tooltip @(Team2.HelpTools?.DoublePointsUsed == true ? (Team2.HelpTools?.DoublePointsActive == true ? "active" : "used") : "available")" title="دبل">
+                                    <img src="images/helptools/target.png" alt="دبل" class="help-icon" />
+                                    <span class="help-label">دبل</span>
+                                    <span class="tooltip-text">يجب التفعيل في اللوحة فقط</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="help-indicator @(Question.CategoryDisableMCQ ? "disabled" : (Team2.HelpTools?.KhiyaratUsed == true ? "used" : "available"))" 
+                                     @onclick="() => UseKhiyaratHelp(Team2.Name)" 
+                                     title="@(Question.CategoryDisableMCQ ? "MCQ غير متاح لهذا السؤال" : "خيارات")">
+                                    <img src="images/helptools/brain.png" alt="خيارات" class="help-icon" />
+                                    <span class="help-label">خيارات</span>
+                                </div>
+                                <div class="help-indicator @(Team2.HelpTools?.TwoAnswersUsed == true ? "used" : "available")" 
+                                     @onclick="() => UseTwoAnswersHelp(Team2.Name)" title="إجابتين">
+                                    <img src="images/helptools/peace.png" alt="إجابتين" class="help-icon" />
+                                    <span class="help-label">إجابتين</span>
+                                </div>
+                                <div class="help-indicator has-tooltip @(Team2.HelpTools?.DoublePointsUsed == true ? (Team2.HelpTools?.DoublePointsActive == true ? "active" : "used") : "available")" title="دبل">
+                                    <img src="images/helptools/target.png" alt="دبل" class="help-icon" />
+                                    <span class="help-label">دبل</span>
+                                    <span class="tooltip-text">يجب التفعيل في اللوحة فقط</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="return-badge" @onclick="ReturnToBoard">
+                <span>العودة للوحة</span>
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            </div>
+        <div class="quiz-main-panel">
+            <div class="quiz-content">
+                <div class="quiz-header">
+                    <span class="quiz-score">@Question.Points نقطة</span>
+                    <div class="timer-container">
+                        <button class="stabilize-btn @GetStabilizeButtonClass()" @onclick="StabilizeTimer" disabled="@isStabilizeButtonDisabled">
+                            تثبيت
+                        </button>
+                        <div class="timer @GetTimerClass()">
+                            <div class="timer-controls">
+                                <button class="timer-control-btn" @onclick="ToggleTimer" title="@(isTimerPaused ? "استئناف" : "إيقاف مؤقت")">
+                                    <i class="fas @(isTimerPaused ? "fa-play" : "fa-pause")"></i>
+                                </button>
+                                <span class="timer-display @GetTimerDisplayClass()">@GetTimerDisplayText()</span>
+                                <button class="timer-control-btn" @onclick="ResetTimer" title="إعادة تعيين">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="quiz-image-container" @onclick="() => ShowImageModal(Question.ImageUrl)">
+                    <img src="@Question.ImageUrl" alt="Question" class="quiz-image" />
+                </div>
+                <div class="quiz-question">
+                    <p>@Question.Text</p>
+                </div>
+                <div class="quiz-footer">
+                    <div style="flex:1"></div>
+                    <button class="answer-btn" @onclick="ShowAnswer">الإجابة</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+@if (showImageModal)
+{
+    <div class="image-modal-overlay" @onclick="CloseImageModal">
+        <div class="image-modal-content" @onclick:stopPropagation="true">
+            <button class="image-modal-close" @onclick="CloseImageModal">×</button>
+            <img src="@modalImageUrl" alt="Full size image" />
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int QuestionId { get; set; }
+
+    private SessionQuestionViewModel Question = new();
+    private TeamViewModel? Team1 { get; set; }
+    private TeamViewModel? Team2 { get; set; }
+
+    private System.Timers.Timer? timer;
+    private TimeSpan TimeRemaining = TimeSpan.FromMinutes(1);
+    private bool isTimerPaused = false;
+    private bool isInOppositePhase = false;
+    private bool isInDangerPhase = false;
+    private bool isStabilizeButtonDisabled = false;
+
+    private bool showImageModal = false;
+    private string? modalImageUrl;
+    private List<string> team1Animations = new();
+    private List<string> team2Animations = new();
+
+    protected override void OnInitialized()
+    {
+        // Game flow initialization
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GameState.InitializeAsync();
+        if (GameState.SessionId == 0)
+        {
+            NavManager.NavigateTo("/session-setup");
+            return;
+        }
+
+        var allCategoriesTask = SessionService.GetSessionQuestionsAsync(GameState.SessionId);
+        var gameStatusTask = SessionService.GetGameStatusAsync(GameState.SessionId);
+        await Task.WhenAll(allCategoriesTask, gameStatusTask);
+
+        var allCategories = await allCategoriesTask;
+        Question = allCategories.SelectMany(c => c.Questions).FirstOrDefault(q => q.QuestionId == QuestionId) ?? new();
+        
+        var gameStatus = await gameStatusTask;
+
+        if (gameStatus != null)
+        {
+            GameState.SessionName = gameStatus.SessionName;
+            GameState.Team1 = gameStatus.Team1Name;
+            GameState.Team2 = gameStatus.Team2Name;
+            GameState.CurrentTurn = gameStatus.CurrentTurn;
+            
+            Team1 = new TeamViewModel { Name = gameStatus.Team1Name, Score = gameStatus.Team1Score, HelpTools = gameStatus.Team1Help };
+            Team2 = new TeamViewModel { Name = gameStatus.Team2Name, Score = gameStatus.Team2Score, HelpTools = gameStatus.Team2Help };
+
+            await GameState.SaveAsync();
+        }
+
+        SetupTimer();
+    }
+
+    private void SetupTimer()
+    {
+        timer = new System.Timers.Timer(1000);
+        timer.Elapsed += async (sender, e) =>
+        {
+            if (!isTimerPaused)
+            {
+                TimeRemaining = TimeRemaining.Subtract(TimeSpan.FromSeconds(1));
+                // 1 minute phase: team color
+                if (TimeRemaining == TimeSpan.Zero && !isInOppositePhase)
+                {
+                    // Enter opposite team color phase (10 seconds)
+                    isInOppositePhase = true;
+                    TimeRemaining = TimeSpan.FromSeconds(10);
+                    // Disable stabilize button when first minute finishes
+                    isStabilizeButtonDisabled = true;
+                }
+                // 10 second phase: opposite team color
+                else if (TimeRemaining == TimeSpan.Zero && isInOppositePhase && !isInDangerPhase)
+                {
+                    // Enter danger phase (start from 0)
+                    isInDangerPhase = true;
+                    TimeRemaining = TimeSpan.FromSeconds(0);
+                }
+                // Stop at -01:00
+                else if (isInDangerPhase && TimeRemaining <= TimeSpan.FromSeconds(-60))
+                {
+                    TimeRemaining = TimeSpan.FromSeconds(-60);
+                    timer?.Stop();
+                }
+                await InvokeAsync(StateHasChanged);
+            }
+        };
+        timer.Start();
+    }
+
+    private void ToggleTimer()
+    {
+        isTimerPaused = !isTimerPaused;
+    }
+
+    private async Task SwitchTeam()
+    {
+        if (Team1 is null || Team2 is null) return;
+        
+        var currentTeamName = GameState.CurrentTurn;
+        var nextTeamName = currentTeamName == Team1.Name ? Team2.Name : Team1.Name;
+        
+        var success = await SessionService.ChangeTurnAsync(GameState.SessionId, nextTeamName);
+        if (success)
+        {
+            GameState.CurrentTurn = nextTeamName;
+            await GameState.SaveAsync();
+        }
+    }
+
+    private void ShowAnswer()
+    {
+        NavManager.NavigateTo($"/answer/{Question.QuestionId}");
+    }
+
+    private async Task UseKhiyaratHelp(string teamName)
+    {
+        try
+        {
+            // Check if MCQ is disabled for this category
+            if (Question.CategoryDisableMCQ)
+            {
+                Console.WriteLine($"MCQ is disabled for category {Question.CategoryId}");
+                return;
+            }
+
+            var success = await SessionService.UseHelpAsync(GameState.SessionId, teamName, "خيارات", Question.QuestionId);
+            if (success)
+            {
+                // Add score decrease animation
+                AddScoreAnimation(teamName, -150);
+                
+                // Update the team's help status
+                if (Team1?.Name == teamName)
+                {
+                    Team1.HelpTools ??= new TeamHelpStatus();
+                    Team1.HelpTools.KhiyaratUsed = true;
+                }
+                else if (Team2?.Name == teamName)
+                {
+                    Team2.HelpTools ??= new TeamHelpStatus();
+                    Team2.HelpTools.KhiyaratUsed = true;
+                }
+                
+                // Navigate to MCQ view
+                NavManager.NavigateTo($"/question-mcq/{Question.QuestionId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error using Khiyarat help: {ex.Message}");
+        }
+    }
+
+    private async Task UseTwoAnswersHelp(string teamName)
+    {
+        try
+        {
+            var success = await SessionService.UseHelpAsync(GameState.SessionId, teamName, "إجابتين", Question.QuestionId);
+            if (success)
+            {
+                // Update the team's help status
+                var team = Team1?.Name == teamName ? Team1 : Team2;
+                if (team != null)
+                {
+                    team.HelpTools ??= new TeamHelpStatus();
+                    team.HelpTools.TwoAnswersUsed = true;
+                    // Handle two answers help (you can implement this later)
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error using two answers help: {ex.Message}");
+        }
+    }
+
+    private async Task UseDoublePointsHelp(string teamName)
+    {
+        try
+        {
+            var success = await SessionService.UseHelpAsync(GameState.SessionId, teamName, "دبل", Question.QuestionId);
+            if (success)
+            {
+                // Update the team's help status
+                var team = Team1?.Name == teamName ? Team1 : Team2;
+                if (team != null)
+                {
+                    team.HelpTools ??= new TeamHelpStatus();
+                    team.HelpTools.DoublePointsUsed = true;
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error using double points help: {ex.Message}");
+        }
+    }
+
+    private void ReturnToBoard()
+    {
+        NavManager.NavigateTo($"/gameboard/{GameState.SessionId}");
+    }
+
+    private void AddScoreAnimation(string team, int points)
+    {
+        if (string.IsNullOrEmpty(team)) return;
+
+        var animation = points > 0 ? "score-up" : "score-down";
+
+        if (team == Team1?.Name)
+        {
+            team1Animations.Add(animation);
+        }
+        else if (team == Team2?.Name)
+        {
+            team2Animations.Add(animation);
+        }
+        StateHasChanged();
+
+        _ = Task.Run(async () => {
+            await Task.Delay(600); // Animation duration
+            if (team == Team1?.Name)
+            {
+                team1Animations.Remove(animation);
+            }
+            else if (team == Team2?.Name)
+            {
+                team2Animations.Remove(animation);
+            }
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
+        // Do not show the navigation when component is disposed
+        // GameState.HideNavigation = false; // Keep navigation hidden
+    }
+
+    public class QuestionViewModel
+    {
+        public string Text { get; set; }
+        public string ImageUrl { get; set; }
+        public int Points { get; set; }
+    }
+
+    public class TeamViewModel
+    {
+        public string? Name { get; set; }
+        public int Score { get; set; }
+        public TeamHelpStatus? HelpTools { get; set; }
+    }
+
+    private void ShowImageModal(string? imageUrl)
+    {
+        Console.WriteLine($"ShowImageModal called with: {imageUrl}");
+        if (!string.IsNullOrEmpty(imageUrl))
+        {
+            showImageModal = true;
+            modalImageUrl = imageUrl;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseImageModal()
+    {
+        showImageModal = false;
+    }
+
+    private string GetTimerClass()
+    {
+        if (isInDangerPhase)
+        {
+            return "danger";
+        }
+        else if (isInOppositePhase)
+        {
+            // Opposite team color
+            return GameState.CurrentTurn == Team1?.Name ? "team2" : "team1";
+        }
+        else
+        {
+            // Team color
+            return GameState.CurrentTurn == Team1?.Name ? "team1" : "team2";
+        }
+    }
+
+    private string GetTimerDisplayClass()
+    {
+        if (isInDangerPhase)
+        {
+            return "text-danger";
+        }
+        else if (isInOppositePhase)
+        {
+            return "text-warning";
+        }
+        else
+        {
+            return "";
+        }
+    }
+
+    private string GetTimerDisplayText()
+    {
+        if (isInDangerPhase)
+        {
+            var absTime = TimeSpan.FromSeconds(Math.Abs((int)TimeRemaining.TotalSeconds));
+            string prefix = TimeRemaining.TotalSeconds < 0 ? "-" : "";
+            return $"{prefix}{absTime.Minutes:D2}:{absTime.Seconds:D2}";
+        }
+        else
+        {
+            return $"{TimeRemaining.Minutes:D2}:{TimeRemaining.Seconds:D2}";
+        }
+    }
+
+    private void ResetTimer()
+    {
+        TimeRemaining = TimeSpan.FromMinutes(1);
+        isInOppositePhase = false;
+        isInDangerPhase = false;
+        timer?.Stop();
+        isTimerPaused = false;
+        isStabilizeButtonDisabled = false;
+        SetupTimer();
+        StateHasChanged();
+    }
+
+    private void StabilizeTimer()
+    {
+        // Skip to the 10-second phase
+        TimeRemaining = TimeSpan.FromSeconds(10);
+        isInOppositePhase = true;
+        isInDangerPhase = false;
+        isStabilizeButtonDisabled = true;
+        StateHasChanged();
+    }
+
+    private string GetStabilizeButtonClass()
+    {
+        if (isStabilizeButtonDisabled)
+        {
+            return "disabled";
+        }
+        
+        if (isInDangerPhase)
+        {
+            return "danger";
+        }
+        else if (isInOppositePhase)
+        {
+            // Opposite team color
+            return GameState.CurrentTurn == Team1?.Name ? "team2" : "team1";
+        }
+        else
+        {
+            // Team color
+            return GameState.CurrentTurn == Team1?.Name ? "team1" : "team2";
+        }
+    }
+}

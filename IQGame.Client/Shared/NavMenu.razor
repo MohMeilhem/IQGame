@@ -1,0 +1,137 @@
+@using IQGame.Client.Services
+@inject GameStateService GameState
+@inject NavigationManager NavManager
+@implements IDisposable
+
+@if (!IsGameFlowPage())
+{
+    <div class="nav-header">
+        <div class="nav-header-right">
+            <ul class="nav-list">
+                <li><a class="nav-link-header" href="#help" @onclick="ScrollToHelp"><i class="fas fa-question-circle"></i> المساعدة</a></li>
+                <li><a class="nav-link-header" href="/sessions"><i class="fas fa-list"></i> الجلسات</a></li>
+                <li><a class="nav-link-header" href="/session-setup"><i class="fas fa-plus-circle"></i> إنشاء جلسة</a></li>
+                <li><a class="nav-link-header" href="/register" ><i class="fas fa-user-plus"></i> التسجيل</a></li>
+                <li><a class="nav-link-header" href="/" ><i class="fas fa-home"></i> الرئيسية</a></li>
+            </ul>
+        </div>
+        <div class="nav-header-center">
+            <!-- Empty for symmetry or future content -->
+        </div>
+        <div class="nav-header-left">
+            <img src="/images/Logos/logo-main.png" alt="IQ Game Logo" class="nav-logo" @onclick="NavigateToHome" style="cursor: pointer;" />
+        </div>
+    </div>
+}
+
+<style>
+.nav-header {
+    background: linear-gradient(90deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+    color: var(--white);
+    padding: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    min-height: 70px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    flex-direction: row-reverse;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+.nav-header-left {
+    justify-content: flex-start;
+    flex: 1 1 0%;
+    display: flex;
+    align-items: center;
+}
+.nav-header-center {
+    flex: 0 0 0%;
+    display: flex;
+    align-items: center;
+}
+.nav-header-right {
+    justify-content: flex-end;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.nav-logo {
+    max-height: 55px;
+    max-width: 120px;
+    width: auto;
+    height: auto;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4));
+}
+.nav-list {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    justify-content: flex-start;
+}
+.nav-link-header {
+    color: var(--white);
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-decoration: none;
+    padding: 0.7rem 1.2rem;
+    border-radius: 1.5rem;
+    background: rgba(255,255,255,0.08);
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.nav-link-header:hover, .nav-link-header.active {
+    background: rgba(255,255,255,0.18);
+    color: #ffe;
+    transform: translateY(-2px) scale(1.04);
+}
+
+/* Add padding to body when nav is visible */
+body:has(.nav-header) {
+    padding-top: 70px;
+}
+</style>
+
+@code {
+    private void NavigateToHome()
+    {
+        NavManager.NavigateTo("/");
+    }
+
+    private void ScrollToHelp()
+    {
+        NavManager.NavigateTo("/#help");
+    }
+
+    private bool IsGameFlowPage()
+    {
+        var currentUri = NavManager.Uri;
+        var gameFlowRoutes = new[]
+        {
+            "/gameboard",
+            "/question",
+            "/question-mcq",
+            "/answer",
+            "/scoring",
+            "/results"
+        };
+        
+        return gameFlowRoutes.Any(route => currentUri.Contains(route));
+    }
+
+    // For compatibility, but not used in this layout
+    private void ToggleNavMenu() { }
+    private string? NavMenuCssClass => null;
+    public void Dispose() { }
+}

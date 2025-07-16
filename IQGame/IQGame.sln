@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35303.130
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQGame.API", "IQGame.API.csproj", "{96488EC6-63D1-4A53-9973-F45D449C5204}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQGame.Domain", "..\IQGame.Domain\IQGame.Domain.csproj", "{7F5B14EF-5139-4080-90CE-77A2E0171B14}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQGame.Infrastructure", "..\IQGame.Infrastructure\IQGame.Infrastructure.csproj", "{93F2FA2D-A4CB-48FF-B4E0-D8575E5503CB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQGame.Application", "..\IQGame.Application\IQGame.Application.csproj", "{BA044702-FE69-41F1-8CA7-496F7491784B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQGame.Admin", "..\IQGame.Admin\IQGame.Admin.csproj", "{6F8C40BB-0316-45BE-9D5D-41A185DD5F29}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IQGame.Shared", "..\IQGame.Shared\IQGame.Shared.csproj", "{C57D856A-7130-4806-A4A1-20BE7CC33D7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IQGame.Client", "..\IQGame.Client\IQGame.Client.csproj", "{C8EDC4A4-18AB-4284-A902-A8A67067893D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{96488EC6-63D1-4A53-9973-F45D449C5204}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96488EC6-63D1-4A53-9973-F45D449C5204}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96488EC6-63D1-4A53-9973-F45D449C5204}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96488EC6-63D1-4A53-9973-F45D449C5204}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F5B14EF-5139-4080-90CE-77A2E0171B14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F5B14EF-5139-4080-90CE-77A2E0171B14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F5B14EF-5139-4080-90CE-77A2E0171B14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F5B14EF-5139-4080-90CE-77A2E0171B14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93F2FA2D-A4CB-48FF-B4E0-D8575E5503CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93F2FA2D-A4CB-48FF-B4E0-D8575E5503CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93F2FA2D-A4CB-48FF-B4E0-D8575E5503CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93F2FA2D-A4CB-48FF-B4E0-D8575E5503CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA044702-FE69-41F1-8CA7-496F7491784B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA044702-FE69-41F1-8CA7-496F7491784B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA044702-FE69-41F1-8CA7-496F7491784B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA044702-FE69-41F1-8CA7-496F7491784B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F8C40BB-0316-45BE-9D5D-41A185DD5F29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F8C40BB-0316-45BE-9D5D-41A185DD5F29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F8C40BB-0316-45BE-9D5D-41A185DD5F29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F8C40BB-0316-45BE-9D5D-41A185DD5F29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C57D856A-7130-4806-A4A1-20BE7CC33D7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C57D856A-7130-4806-A4A1-20BE7CC33D7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C57D856A-7130-4806-A4A1-20BE7CC33D7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C57D856A-7130-4806-A4A1-20BE7CC33D7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8EDC4A4-18AB-4284-A902-A8A67067893D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8EDC4A4-18AB-4284-A902-A8A67067893D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8EDC4A4-18AB-4284-A902-A8A67067893D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8EDC4A4-18AB-4284-A902-A8A67067893D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {45081D0C-9052-4D7A-914D-8C43B52D984E}
+	EndGlobalSection
+EndGlobal

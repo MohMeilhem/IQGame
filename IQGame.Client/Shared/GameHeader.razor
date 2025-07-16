@@ -1,0 +1,40 @@
+@using IQGame.Client.Services
+@inject GameStateService GameState
+@inject NavigationManager NavManager
+
+<div class="game-header">
+    <div class="header-left">
+        <img src="/images/Logos/logo-main.png" alt="IQ Game Logo" class="game-logo" @onclick="NavigateToHome" style="cursor: pointer;" />
+        @if (ShowTeamInfo)
+        {
+            <div class="team-info">
+                <span class="team-name">دور فريق: @(string.IsNullOrEmpty(GameState.CurrentTurn) ? "N/A" : GameState.CurrentTurn)</span>
+                <button class="switch-turn-button" @onclick="OnSwitchTeam" title="تبديل الفريق" disabled="@(!OnSwitchTeam.HasDelegate)">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
+        }
+    </div>
+    <div class="header-center">
+        <h1 class="session-name">@Title</h1>
+    </div>
+    <div class="header-right">
+        <button class="exit-button" @onclick="() => NavManager.NavigateTo(ExitUrl)">
+            <span class="oi oi-x"></span>
+            @ExitText
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "الجلسة";
+    [Parameter] public bool ShowTeamInfo { get; set; } = true;
+    [Parameter] public EventCallback OnSwitchTeam { get; set; }
+    [Parameter] public string ExitText { get; set; } = "الخروج";
+    [Parameter] public string ExitUrl { get; set; } = "/";
+
+    private void NavigateToHome()
+    {
+        NavManager.NavigateTo("/");
+    }
+} 

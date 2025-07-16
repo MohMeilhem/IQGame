@@ -1,0 +1,1265 @@
+﻿@page "/gameboard/{SessionId:int}"
+@layout GameLayout
+@using IQGame.Application.Models.Session
+@using IQGame.Client.Services
+@using Microsoft.AspNetCore.Components.Web
+@inject SessionService SessionService
+@inject GameStateService GameState
+@inject NavigationManager NavManager
+@inject HttpClient Http
+@implements IDisposable
+
+@if (isLoading)
+{
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+        <span>جاري التحميل...</span>
+    </div>
+}
+else if (!string.IsNullOrEmpty(error))
+{
+    <div class="error-message">
+        @error
+        <button class="header-button" @onclick="RetryLoading">إعادة المحاولة</button>
+    </div>
+}
+else
+{
+    <div class="game-page">
+        <GameHeader Title="@SessionName" OnSwitchTeam="SwitchTeam" ExitUrl="/" />
+
+        <div class="board board-grid">
+            @foreach (var category in Categories)
+            {
+                <div class="category">
+                    <div class="category-name">@category.Name</div>
+                    <div class="points-grid">
+                        <div class="points-left">
+                            @for (int i = 0; i < 3; i++)
+                            {
+                                var q = i == 0 ? category.EasyQuestions.ElementAtOrDefault(0)
+                                    : i == 1 ? category.MediumQuestions.ElementAtOrDefault(0)
+                                    : category.HardQuestions.ElementAtOrDefault(0);
+                                var points = i == 0 ? 250 : i == 1 ? 500 : 750;
+                                <div class="point @(q != null && q.IsAnswered ? "answered" : "")"
+                                     @onclick="q != null ? (() => SelectQuestion(category.Id, q.Id, points)) : null"
+                                     style="@(q == null || (q != null && q.IsAnswered) ? "pointer-events: none; opacity: 0.5;" : "")">
+                                    @points
+                                </div>
+                            }
+                        </div>
+                        <div class="category-image-container">
+                            <img src="@category.ImageUrl" alt="@category.Name" @onerror="@(e => HandleImageError(e, category))">
+                        </div>
+                        <div class="points-right">
+                            @for (int i = 0; i < 3; i++)
+                            {
+                                var q = i == 0 ? category.EasyQuestions.ElementAtOrDefault(1)
+                                    : i == 1 ? category.MediumQuestions.ElementAtOrDefault(1)
+                                    : category.HardQuestions.ElementAtOrDefault(1);
+                                var points = i == 0 ? 250 : i == 1 ? 500 : 750;
+                                <div class="point @(q != null && q.IsAnswered ? "answered" : "")"
+                                     @onclick="q != null ? (() => SelectQuestion(category.Id, q.Id, points)) : null"
+                                     style="@(q == null || (q != null && q.IsAnswered) ? "pointer-events: none; opacity: 0.5;" : "")">
+                                    @points
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <footer class="footer team-footer">
+            <div class="team-footer-container">
+                <div class="footer-group left-footer-group">
+                    <div class="team-box left-team">
+                        @foreach (var anim in team1Animations)
+                        {
+                            <div @key="anim.Id" class="score-change-indicator @(anim.IsPositive ? "plus" : "minus") animate">@anim.Text</div>
+                        }
+                        <div class="team-name-footer">@(string.IsNullOrWhiteSpace(Teams.ElementAtOrDefault(0)?.Name) ? "Team 1" : Teams.ElementAtOrDefault(0)?.Name)</div>
+                        <div class="score-controls-footer">
+                            <button @onclick="() => UpdateScore(Teams.ElementAtOrDefault(0)?.Name, 50)">+</button>
+                            <div class="score-display-footer">@Teams.ElementAtOrDefault(0)?.Score</div>
+                            <button @onclick="() => UpdateScore(Teams.ElementAtOrDefault(0)?.Name, -50)">-</button>
+                        </div>
+                    </div>
+                    <div class="help-tools-footer help-tools-left">
+                        <div class="help-indicator-footer @(Teams.ElementAtOrDefault(0)?.HelpTools.KhiyaratUsed == true ? "used" : "available")" title="خيارات">
+                            <img src="images/helptools/brain.png" alt="خيارات" class="help-icon-footer"/>
+                        </div>
+                        <div class="help-indicator-footer @(Teams.ElementAtOrDefault(0)?.HelpTools.TwoAnswersUsed == true ? "used" : "available")" title="إجابتين">
+                            <img src="images/helptools/peace.png" alt="إجابتين" class="help-icon-footer"/>
+                        </div>
+                        <div class="help-indicator-footer double-points @(GetDoublePointsStatus(Teams.ElementAtOrDefault(0)?.HelpTools)) @(IsTeamTurn(Teams.ElementAtOrDefault(0)?.Name) ? "team-turn" : "")" 
+                             title="@(GetDoublePointsTitle(Teams.ElementAtOrDefault(0)?.HelpTools, Teams.ElementAtOrDefault(0)?.Name))"
+                             @onclick="@(() => OnHelpToolClicked(Teams.ElementAtOrDefault(0)?.Name, "دبل"))">
+                            <img src="images/helptools/target.png" alt="دبل" class="help-icon-footer"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-logo">
+                    <img src="images/Logos/logo-main.png" alt="IQGame Logo" class="game-logo-footer"/>
+                </div>
+                <div class="footer-group right-footer-group">
+                    <div class="help-tools-footer help-tools-right">
+                        <div class="help-indicator-footer @(Teams.ElementAtOrDefault(1)?.HelpTools.KhiyaratUsed == true ? "used" : "available")" title="خيارات">
+                            <img src="images/helptools/brain.png" alt="خيارات" class="help-icon-footer"/>
+                        </div>
+                        <div class="help-indicator-footer @(Teams.ElementAtOrDefault(1)?.HelpTools.TwoAnswersUsed == true ? "used" : "available")" title="إجابتين">
+                            <img src="images/helptools/peace.png" alt="إجابتين" class="help-icon-footer"/>
+                        </div>
+                        <div class="help-indicator-footer double-points @(GetDoublePointsStatus(Teams.ElementAtOrDefault(1)?.HelpTools)) @(IsTeamTurn(Teams.ElementAtOrDefault(1)?.Name) ? "team-turn" : "")" 
+                             title="@(GetDoublePointsTitle(Teams.ElementAtOrDefault(1)?.HelpTools, Teams.ElementAtOrDefault(1)?.Name))"
+                             @onclick="@(() => OnHelpToolClicked(Teams.ElementAtOrDefault(1)?.Name, "دبل"))">
+                            <img src="images/helptools/target.png" alt="دبل" class="help-icon-footer"/>
+                        </div>
+                    </div>
+                    <div class="team-box right-team">
+                        @foreach (var anim in team2Animations)
+                        {
+                            <div @key="anim.Id" class="score-change-indicator @(anim.IsPositive ? "plus" : "minus") animate">@anim.Text</div>
+                        }
+                        <div class="team-name-footer">@(string.IsNullOrWhiteSpace(Teams.ElementAtOrDefault(1)?.Name) ? "Team 2" : Teams.ElementAtOrDefault(1)?.Name)</div>
+                        <div class="score-controls-footer">
+                            <button @onclick="() => UpdateScore(Teams.ElementAtOrDefault(1)?.Name, 50)">+</button>
+                            <div class="score-display-footer">@Teams.ElementAtOrDefault(1)?.Score</div>
+                            <button @onclick="() => UpdateScore(Teams.ElementAtOrDefault(1)?.Name, -50)">-</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+}
+
+@code {
+    [Parameter] public int SessionId { get; set; }
+    private string SessionName { get; set; }
+    private string CurrentTeam { get; set; }
+    private List<CategoryViewModel> Categories { get; set; } = new();
+    private List<TeamViewModel> Teams { get; set; } = new();
+    private bool isLoading = true;
+    private string error;
+    private List<ScoreChangeAnimation> team1Animations = new();
+    private List<ScoreChangeAnimation> team2Animations = new();
+
+    public class ScoreChangeAnimation
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Text { get; set; }
+        public bool IsPositive { get; set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("OnInitialized called");
+        base.OnInitialized();
+    }
+
+    public void Dispose()
+    {
+        // Cleanup if needed
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GameState.InitializeAsync();
+        // Then update with the SessionId from the URL
+        GameState.SessionId = SessionId;
+        // Save the updated state
+        await GameState.SaveAsync();
+        await LoadGameData();
+    }
+
+    private async Task LoadGameData()
+    {
+        try
+        {
+            Console.WriteLine("LoadGameData started");
+            isLoading = true;
+            error = null;
+            StateHasChanged();
+
+            await GameState.InitializeAsync();
+            Console.WriteLine($"GameState initialized. SessionId: {GameState.SessionId}");
+            
+            if (GameState.SessionId == 0)
+            {
+                Console.WriteLine("No SessionId found, redirecting to session-setup");
+                NavManager.NavigateTo("/session-setup");
+                return;
+            }
+
+            // Load all data in parallel
+            var currentTurnTask = SessionService.GetCurrentTurnAsync(GameState.SessionId);
+            var gameStatusTask = SessionService.GetGameStatusAsync(GameState.SessionId);
+            var questionsTask = SessionService.GetSessionQuestionsAsync(GameState.SessionId);
+
+            await Task.WhenAll(currentTurnTask, gameStatusTask, questionsTask);
+            Console.WriteLine("All data loaded successfully");
+
+            // Set current team
+            CurrentTeam = await currentTurnTask;
+            GameState.CurrentTurn = CurrentTeam;
+            Console.WriteLine($"Current team set to: {CurrentTeam}");
+
+            // Get game status and check if game is finished
+            var gameStatus = await gameStatusTask;
+            if (gameStatus?.GameFinished == true)
+            {
+                Console.WriteLine("Game is finished, redirecting to results");
+                NavManager.NavigateTo("/results");
+                return;
+            }
+
+            // Initialize teams
+            Teams = new List<TeamViewModel>
+            {
+                new TeamViewModel 
+                { 
+                    Name = gameStatus.Team1Name, 
+                    Score = gameStatus.Team1Score,
+                    HelpTools = gameStatus.Team1Help ?? new TeamHelpStatus 
+                    { 
+                        TeamName = gameStatus.Team1Name,
+                        KhiyaratUsed = false,
+                        TwoAnswersUsed = false,
+                        DoublePointsUsed = false
+                    }
+                },
+                new TeamViewModel 
+                { 
+                    Name = gameStatus.Team2Name, 
+                    Score = gameStatus.Team2Score,
+                    HelpTools = gameStatus.Team2Help ?? new TeamHelpStatus
+                    {
+                        TeamName = gameStatus.Team2Name,
+                        KhiyaratUsed = false,
+                        TwoAnswersUsed = false,
+                        DoublePointsUsed = false
+                    }
+                }
+            };
+            Console.WriteLine($"Teams initialized. Team1: {Teams[0].Name}, Team2: {Teams[1].Name}");
+            Console.WriteLine($"Team scores from API - Team1: {gameStatus.Team1Score}, Team2: {gameStatus.Team2Score}");
+            Console.WriteLine($"Team names from API - Team1: {gameStatus.Team1Name}, Team2: {gameStatus.Team2Name}");
+
+            // Get categories with questions
+            var categoriesWithQuestions = await questionsTask;
+            Categories = categoriesWithQuestions.Select(c => new CategoryViewModel
+            {
+                Id = c.CategoryId,
+                Name = c.CategoryName,
+                ImageUrl = GetCategoryImageUrl(c.CategoryId, c.CategoryImageUrl),
+                EasyQuestions = c.Questions.Where(q => q.Difficulty == 1).Take(4).Select(q => new QuestionSlotViewModel { Id = q.QuestionId, IsAnswered = q.IsScored }).ToList(),
+                MediumQuestions = c.Questions.Where(q => q.Difficulty == 2).Take(4).Select(q => new QuestionSlotViewModel { Id = q.QuestionId, IsAnswered = q.IsScored }).ToList(),
+                HardQuestions = c.Questions.Where(q => q.Difficulty == 3).Take(4).Select(q => new QuestionSlotViewModel { Id = q.QuestionId, IsAnswered = q.IsScored }).ToList(),
+            }).ToList();
+            Console.WriteLine($"Categories loaded. Count: {Categories.Count}");
+
+            // Fetch session name from API
+            var sessionInfo = await Http.GetFromJsonAsync<SessionInfo>($"api/sessions/{SessionId}");
+            SessionName = sessionInfo?.SessionName ?? "Session";
+            Console.WriteLine($"SessionName set to: {SessionName}");
+        }
+        catch (Exception ex)
+        {
+            error = $"خطأ في تحميل البيانات: {ex.Message}";
+            Console.Error.WriteLine($"Error in LoadGameData: {ex}");
+            if (ex is HttpRequestException httpEx && httpEx.Message.Contains("404"))
+            {
+                NavManager.NavigateTo("/session-setup");
+            }
+        }
+        finally
+        {
+            isLoading = false;
+            Console.WriteLine("Loading completed. isLoading set to false");
+            StateHasChanged();
+        }
+    }
+
+    private async Task RetryLoading()
+    {
+        await LoadGameData();
+    }
+
+    private string GetCategoryImageUrl(int categoryId, string imageUrl)
+    {
+        if (!string.IsNullOrEmpty(imageUrl))
+        {
+            return imageUrl;
+        }
+
+        var baseUrl = Http.BaseAddress?.ToString().TrimEnd('/');
+        return $"{baseUrl}/images/categories/{categoryId}.png";
+    }
+
+    private void NavigateToHome()
+    {
+        NavManager.NavigateTo("/");
+    }
+
+    private async Task SwitchTeam()
+    {
+        try
+        {
+            var nextTeam = CurrentTeam == Teams[0].Name ? Teams[1].Name : Teams[0].Name;
+            var success = await SessionService.ChangeTurnAsync(GameState.SessionId, nextTeam);
+            if (success)
+            {
+                CurrentTeam = nextTeam;
+                GameState.CurrentTurn = CurrentTeam;
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"خطأ في تبديل الفريق: {ex.Message}";
+        }
+    }
+
+    private async Task SelectQuestion(int categoryId, int questionId, int points)
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(CurrentTeam))
+            {
+                NavManager.NavigateTo($"/question/{questionId}");
+            }
+            else
+            {
+                error = "يجب تحديد الفريق الحالي أولاً";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"خطأ في اختيار السؤال: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateScore(string team, int points)
+    {
+        if (string.IsNullOrEmpty(team)) return;
+
+        Console.WriteLine($"🔍 UpdateScore called for team: '{team}' with points: {points}");
+        Console.WriteLine($"🔍 Current teams: Team1='{Teams.ElementAtOrDefault(0)?.Name}' (Score: {Teams.ElementAtOrDefault(0)?.Score}), Team2='{Teams.ElementAtOrDefault(1)?.Name}' (Score: {Teams.ElementAtOrDefault(1)?.Score})");
+
+        var animation = new ScoreChangeAnimation
+        {
+            Text = $"{(points > 0 ? "+" : "")}{points}",
+            IsPositive = points > 0
+        };
+
+        if (team == Teams.ElementAtOrDefault(0)?.Name)
+        {
+            Console.WriteLine($"✅ Adding animation for Team 1: {team}");
+            team1Animations.Add(animation);
+        }
+        else if (team == Teams.ElementAtOrDefault(1)?.Name)
+        {
+            Console.WriteLine($"✅ Adding animation for Team 2: {team}");
+            team2Animations.Add(animation);
+        }
+        else
+        {
+            Console.WriteLine($"❌ Team '{team}' not found in Teams collection!");
+        }
+        StateHasChanged();
+
+        _ = Task.Run(async () => {
+            await Task.Delay(600); // Animation duration
+            if (team == Teams.ElementAtOrDefault(0)?.Name)
+            {
+                team1Animations.Remove(animation);
+            }
+            else if (team == Teams.ElementAtOrDefault(1)?.Name)
+            {
+                team2Animations.Remove(animation);
+            }
+            await InvokeAsync(StateHasChanged);
+        });
+
+        var currentScore = Teams.FirstOrDefault(t => t.Name == team)?.Score ?? 0;
+        var newScore = currentScore + points;
+        if (newScore < 0) newScore = 0;
+        if (newScore > 10500) newScore = 10500;
+        var delta = newScore - currentScore;
+        if (delta == 0) return;
+
+        Console.WriteLine($"🔍 Updating score for team '{team}': {currentScore} + {delta} = {newScore}");
+
+        var success = await SessionService.UpdateTeamScoreAsync(GameState.SessionId, team, delta);
+
+        Console.WriteLine($"🔍 UpdateTeamScoreAsync result: {success}");
+
+        if (success)
+        {
+            var gameStatus = await SessionService.GetGameStatusAsync(GameState.SessionId);
+            Console.WriteLine($"🔍 GameStatus response: Team1Score={gameStatus?.Team1Score}, Team2Score={gameStatus?.Team2Score}");
+            
+            if (Teams.Count > 1 && gameStatus != null)
+            {
+                Teams[0].Score = gameStatus.Team1Score;
+                Teams[0].HelpTools = gameStatus.Team1Help;
+                Teams[1].Score = gameStatus.Team2Score;
+                Teams[1].HelpTools = gameStatus.Team2Help;
+                
+                Console.WriteLine($"✅ Updated local scores: Team1={Teams[0].Score}, Team2={Teams[1].Score}");
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        else
+        {
+            Console.WriteLine($"❌ Failed to update score for team '{team}'");
+        }
+    }
+
+    private int GetTeamScore(string team) => Teams.FirstOrDefault(t => t.Name == team)?.Score ?? 0;
+
+    private async Task UseHelpTool(string teamName, string helpType)
+    {
+        if (string.IsNullOrEmpty(teamName) || string.IsNullOrEmpty(helpType)) return;
+
+        var team = Teams.FirstOrDefault(t => t.Name == teamName);
+        if (team == null) return;
+
+        // Check if already used
+        if (helpType == "دبل" && team.HelpTools.DoublePointsUsed)
+        {
+            return; // Already used
+        }
+
+        try
+        {
+            var success = await SessionService.UseHelpAsync(GameState.SessionId, teamName, helpType);
+            if (success)
+            {
+                // Refresh help status from server to get accurate state
+                var gameStatus = await SessionService.GetGameStatusAsync(GameState.SessionId);
+                if (gameStatus != null)
+                {
+                    // Update both teams' help status
+                    if (Teams.Count > 1)
+                    {
+                        Teams[0].HelpTools = gameStatus.Team1Help;
+                        Teams[1].HelpTools = gameStatus.Team2Help;
+                    }
+                }
+                else
+                {
+                    // Fallback to local update if server refresh fails
+                    if (helpType == "دبل")
+                    {
+                        team.HelpTools.DoublePointsUsed = true;
+                        team.HelpTools.DoublePointsActive = true; // Set as active when first used
+                    }
+                }
+                
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error using help tool: {ex.Message}");
+        }
+    }
+
+    private void HandleImageError(ErrorEventArgs e, CategoryViewModel category)
+    {
+        category.ImageUrl = "_content/IQGame.Client/images/fallback.png";
+        StateHasChanged();
+    }
+
+    public class CategoryViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string ImageUrl { get; set; }
+        public List<QuestionSlotViewModel> EasyQuestions { get; set; } = new();
+        public List<QuestionSlotViewModel> MediumQuestions { get; set; } = new();
+        public List<QuestionSlotViewModel> HardQuestions { get; set; } = new();
+    }
+
+    public class QuestionSlotViewModel
+    {
+        public int Id { get; set; }
+        public bool IsAnswered { get; set; }
+    }
+
+    public class TeamViewModel
+    {
+        public string Name { get; set; }
+        public int Score { get; set; }
+        public TeamHelpStatus HelpTools { get; set; }
+    }
+
+    private class SessionInfo
+    {
+        public int SessionId { get; set; }
+        public string SessionName { get; set; }
+        public string Team1 { get; set; }
+        public string Team2 { get; set; }
+    }
+
+    private bool IsTeamTurn(string teamName)
+    {
+        return teamName == CurrentTeam;
+    }
+
+    private void OnHelpToolClicked(string teamName, string helpType)
+    {
+        if (!IsTeamTurn(teamName))
+        {
+            // Optionally show a message to the user (e.g., toast notification)
+            return;
+        }
+
+        // Additional check for double points - prevent if already used
+        if (helpType == "دبل")
+        {
+            var team = Teams.FirstOrDefault(t => t.Name == teamName);
+            if (team?.HelpTools.DoublePointsUsed == true)
+            {
+                return; // Already used
+            }
+        }
+
+        _ = UseHelpTool(teamName, helpType);
+    }
+
+    private string GetDoublePointsStatus(TeamHelpStatus helpTools)
+    {
+        if (helpTools == null) return "available";
+        
+        if (helpTools.DoublePointsUsed && !helpTools.DoublePointsActive)
+        {
+            return "used"; // Used and consumed
+        }
+        else if (helpTools.DoublePointsActive)
+        {
+            return "active"; // Special state for active but not consumed
+        }
+        else
+        {
+            return "available"; // Not used yet
+        }
+    }
+
+    private string GetDoublePointsTitle(TeamHelpStatus helpTools, string teamName)
+    {
+        if (helpTools == null) return "دبل";
+        
+        if (helpTools.DoublePointsUsed && !helpTools.DoublePointsActive)
+        {
+            return "دبل (مستخدم)";
+        }
+        else if (helpTools.DoublePointsActive)
+        {
+            return IsTeamTurn(teamName) ? "دبل (متاح للاستخدام)" : "دبل (متاح)";
+        }
+        else
+        {
+            return IsTeamTurn(teamName) ? "دبل" : "مو دور فريقك";
+        }
+    }
+}
+
+<style>
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.game-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: var(--background-color);
+    overflow: hidden;
+}
+
+.game-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    height: 90px !important;
+    z-index: 1000 !important;
+    background: linear-gradient(90deg, #6c3fc5 0%, #0A6A4E 100%) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10) !important;
+    padding: 0.7rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.footer.team-footer {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 140px !important;
+    z-index: 1000 !important;
+    background: linear-gradient(90deg, #6c3fc5 0%, #0A6A4E 100%) !important;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.10) !important;
+    padding: 0.8rem 0 0.6rem 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-end !important;
+}
+
+@@media (min-width: 1600px) {
+    .footer.team-footer {
+        height: 160px !important;
+        padding: 1rem 0 0.8rem 0 !important;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .footer.team-footer {
+        height: 180px !important;
+        padding: 1.2rem 0 1rem 0 !important;
+    }
+}
+
+.board {
+    position: fixed !important;
+    top: 90px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 140px !important;
+    padding: 2vh 1vw !important;
+    background-color: var(--background-color) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: block;
+}
+
+@@media (min-width: 1600px) {
+    .board {
+        top: 90px !important;
+        bottom: 160px !important;
+        padding: 2vh 1vw !important;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .board {
+        top: 90px !important;
+        bottom: 180px !important;
+        padding: 2vh 1vw !important;
+    }
+}
+
+.board.board-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 0.1rem;
+    justify-items: center;
+    align-items: start;
+    padding: 0.2rem;
+    background-color: var(--background-color);
+    max-width: 100%;
+    margin: 0 auto;
+    height: auto;
+    overflow: visible;
+}
+
+/* Responsive adjustments for larger screens */
+@@media (min-width: 1600px) {
+    .board.board-grid {
+        grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+        gap: 0.15rem;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .board.board-grid {
+        grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+        gap: 0.2rem;
+    }
+}
+
+.team-footer-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+    padding: 0 3vw;
+    box-sizing: border-box;
+}
+.footer-group {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin: 0 1.2rem;
+}
+.left-footer-group {
+    justify-content: flex-start;
+}
+.right-footer-group {
+    justify-content: flex-end;
+}
+.team-box {
+    position: relative;
+    background: rgba(255,255,255,0.12);
+    border-radius: 1.2rem;
+    padding: 0.9rem 3rem 0.9rem 3rem;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@@media (min-width: 1600px) {
+    .team-box {
+        padding: 1.1rem 3.5rem 1.1rem 3.5rem;
+        min-width: 350px;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .team-box {
+        padding: 1.3rem 4rem 1.3rem 4rem;
+        min-width: 400px;
+    }
+}
+.team-name-footer {
+    color: #FFFFFF;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.4rem;
+    text-align: center;
+}
+
+@@media (min-width: 1600px) {
+    .team-name-footer {
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .team-name-footer {
+        font-size: 1.6rem;
+        margin-bottom: 0.6rem;
+    }
+}
+.score-controls-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+}
+
+@@media (min-width: 1600px) {
+    .score-controls-footer {
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .score-controls-footer {
+        gap: 1.2rem;
+        margin-bottom: 1.2rem;
+    }
+}
+.score-controls-footer button {
+    background: linear-gradient(90deg, #0A6A4E 0%, #6c3fc5 100%);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+@@media (min-width: 1600px) {
+    .score-controls-footer button {
+        width: 44px;
+        height: 44px;
+        font-size: 1.6rem;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .score-controls-footer button {
+        width: 50px;
+        height: 50px;
+        font-size: 1.8rem;
+    }
+}
+.score-controls-footer button:hover {
+    transform: scale(1.1);
+}
+.score-display-footer {
+    background: rgba(255,255,255,0.2);
+    color: #FFFFFF;
+    padding: 0.4rem 1.3rem;
+    border-radius: 0.8rem;
+    font-weight: bold;
+    font-size: 1.3rem;
+    min-width: 50px;
+    text-align: center;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+
+@@media (min-width: 1600px) {
+    .score-display-footer {
+        padding: 0.5rem 1.5rem;
+        font-size: 1.5rem;
+        min-width: 60px;
+        border-radius: 0.9rem;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .score-display-footer {
+        padding: 0.6rem 1.7rem;
+        font-size: 1.7rem;
+        min-width: 70px;
+        border-radius: 1rem;
+    }
+}
+.help-tools-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1.2rem;
+    margin: 0 1.2rem;
+}
+.help-indicator-footer {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+    background: linear-gradient(90deg, #0A6A4E 0%, #6c3fc5 100%);
+    padding: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+@@media (min-width: 1600px) {
+    .help-indicator-footer {
+        width: 58px;
+        height: 58px;
+        padding: 6px;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .help-indicator-footer {
+        width: 66px;
+        height: 66px;
+        padding: 7px;
+    }
+}
+.help-indicator-footer.double-points.available {
+    background: var(--primary-green);
+    cursor: pointer;
+}
+
+.help-indicator-footer.double-points.available:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.help-indicator-footer.double-points.available:not(.team-turn) {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.help-indicator-footer.double-points.available:not(.team-turn):hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.help-indicator-footer.double-points.active {
+    background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+    cursor: pointer;
+    animation: pulse 2s infinite;
+}
+
+.help-indicator-footer.double-points.active:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.help-indicator-footer.double-points.active:not(.team-turn) {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.help-indicator-footer.double-points.active:not(.team-turn):hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+@@keyframes pulse {
+    0% {
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(255, 215, 0, 0.6);
+    }
+    100% {
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    }
+}
+
+.help-indicator-footer.used {
+    background: linear-gradient(90deg, #6c757d 0%, #495057 100%);
+    cursor: not-allowed;
+    transform: scale(0.9);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.help-indicator-footer.used .help-icon-footer {
+    filter: grayscale(1) brightness(0.6) sepia(0.3);
+}
+
+.help-indicator-footer.double-points.used {
+    background: linear-gradient(90deg, #6c757d 0%, #495057 100%);
+    cursor: not-allowed;
+    transform: scale(0.9);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    animation: none;
+}
+
+.help-indicator-footer.double-points.used:hover {
+    transform: scale(0.9);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.help-indicator-footer.double-points.used .help-icon-footer {
+    filter: grayscale(1) brightness(0.6) sepia(0.3);
+}
+
+.help-icon-footer {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 3px white);
+}
+
+.category {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(90deg, #6c3fc5 0%, #0A6A4E 100%);
+    border-radius: 1.2rem;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    height: 280px;
+    width: 450px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+/* Responsive category sizing */
+@@media (min-width: 1600px) {
+    .category {
+        height: 320px;
+        width: 520px;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .category {
+        height: 360px;
+        width: 580px;
+    }
+}
+
+.category-name {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--white);
+    padding: 0.8rem;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.3rem;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+@@media (min-width: 1600px) {
+    .category-name {
+        padding: 1rem;
+        font-size: 1.5rem;
+        height: 52px;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .category-name {
+        padding: 1.2rem;
+        font-size: 1.7rem;
+        height: 60px;
+    }
+}
+
+.points-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    height: calc(100% - 44px);
+    padding: 0.2rem;
+}
+
+@@media (min-width: 1600px) {
+    .points-grid {
+        height: calc(100% - 52px);
+        padding: 0.3rem;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .points-grid {
+        height: calc(100% - 60px);
+        padding: 0.4rem;
+    }
+}
+
+.points-left, .points-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+.point {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+    color: #FFFFFF;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.8rem;
+    padding: 0.7rem;
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+    min-width: 52px;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.1rem;
+    backdrop-filter: blur(5px);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.point:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.25) 100%);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+.point.answered {
+    background: linear-gradient(135deg, #6c757d 0%,rgb(99, 106, 114) 50%,rgb(105, 108, 111) 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+    cursor: not-allowed;
+    transform: scale(0.95);
+    opacity: 0.7;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+    filter: grayscale(0.3);
+}
+
+@@media (min-width: 1600px) {
+    .point {
+        border-radius: 0.9rem;
+        padding: 0.8rem;
+        font-size: 1.4rem;
+        min-width: 58px;
+        min-height: 58px;
+        margin: 0.15rem;
+        border-width: 2px;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .point {
+        border-radius: 1rem;
+        padding: 0.9rem;
+        font-size: 1.6rem;
+        min-width: 66px;
+        min-height: 66px;
+        margin: 0.2rem;
+        border-width: 2px;
+    }
+}
+
+.category-image-container {
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 140px;
+    min-width: 120px;
+    max-width: 160px;
+    height: 220px;
+    margin: 0.3rem 0;
+    padding: 0.2rem;
+    border-radius: 1.1rem;
+}
+
+.category-image-container img {
+    max-width: 130px;
+    max-height: 200px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 0.8rem;
+}
+
+@@media (min-width: 1600px) {
+    .category-image-container {
+        width: 160px;
+        min-width: 140px;
+        max-width: 180px;
+        height: 250px;
+        margin: 0.4rem 0;
+        padding: 0.3rem;
+        border-radius: 1.3rem;
+    }
+    
+    .category-image-container img {
+        max-width: 150px;
+        max-height: 230px;
+        border-radius: 1rem;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .category-image-container {
+        width: 180px;
+        min-width: 160px;
+        max-width: 200px;
+        height: 280px;
+        margin: 0.5rem 0;
+        padding: 0.4rem;
+        border-radius: 1.5rem;
+    }
+    
+    .category-image-container img {
+        max-width: 170px;
+        max-height: 260px;
+        border-radius: 1.2rem;
+    }
+}
+
+.header-left {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+:host([dir="rtl"]) .header-left, .game-header[dir="rtl"] .header-left, body[dir="rtl"] .header-left, html[dir="rtl"] .header-left {
+    margin-left: unset;
+    margin-right: auto;
+}
+
+@@keyframes swipe-up-fade {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -60px); /* move up */
+    }
+}
+
+.score-change-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 0);
+    font-size: 1.6rem;
+    font-weight: bold;
+    opacity: 0;
+    pointer-events: none; /* so it doesn't block clicks */
+    z-index: 10;
+}
+
+.score-change-indicator.plus {
+    color: #4CAF50; /* Green */
+    text-shadow: 0 0 5px white;
+}
+
+.score-change-indicator.minus {
+    color: #F44336; /* Red */
+    text-shadow: 0 0 5px white;
+}
+
+.score-change-indicator.animate {
+    animation: swipe-up-fade 0.6s ease-out forwards;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(90deg, #0A6A4E 0%, #6c3fc5 100%);
+    padding: 1rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.game-logo-footer {
+    height: 120px;
+    width: auto;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+@@media (min-width: 1600px) {
+    .game-logo-footer {
+        height: 140px;
+    }
+}
+
+@@media (min-width: 1920px) {
+    .game-logo-footer {
+        height: 160px;
+    }
+}
+
+.footer-group {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin: 0 1.2rem;
+}
+</style>

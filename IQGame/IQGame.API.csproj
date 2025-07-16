@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IQGame.Application\IQGame.Application.csproj" />
+    <ProjectReference Include="..\IQGame.Domain\IQGame.Domain.csproj" />
+    <ProjectReference Include="..\IQGame.Infrastructure\IQGame.Infrastructure.csproj" />
+    <ProjectReference Include="..\IQGame.Shared\IQGame.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\images\answers\" />
+    <Folder Include="wwwroot\images\categories\" />
+    <Folder Include="wwwroot\images\questions\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\images\Logos\IQGame_Logo.PNG" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\IQGame.Client\Pages\Component.razor" Link="Component.razor" />
+  </ItemGroup>
+
+</Project>

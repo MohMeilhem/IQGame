@@ -1,0 +1,132 @@
+@{
+    ViewData["Title"] = "Image Search Status";
+}
+
+<h1>Image Search Provider Status</h1>
+
+@if (ViewBag.ProviderStatus != null)
+{
+    var status = ViewBag.ProviderStatus as Dictionary<string, object>;
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Current Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Preferred Provider:</strong> @status["PreferredProvider"]</p>
+                    <p><strong>Available Providers:</strong> @string.Join(", ", (List<string>)status["AvailableProviders"])</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Provider Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="badge @(status["GoogleCSE_Configured"].ToString() == "True" ? "bg-success" : "bg-danger")">
+                            Google CSE: @(status["GoogleCSE_Configured"].ToString() == "True" ? "Configured" : "Not Configured")
+                        </span>
+                        @if (status.ContainsKey("GoogleCSE_Working"))
+                        {
+                            <span class="badge @(status["GoogleCSE_Working"].ToString() == "True" ? "bg-success" : "bg-warning") ms-1">
+                                @(status["GoogleCSE_Working"].ToString() == "True" ? "Working" : "Not Working")
+                            </span>
+                        }
+                    </div>
+                    
+                    <div class="mb-2">
+                        <span class="badge @(status["SerpAPI_Configured"].ToString() == "True" ? "bg-success" : "bg-danger")">
+                            SerpAPI: @(status["SerpAPI_Configured"].ToString() == "True" ? "Configured" : "Not Configured")
+                        </span>
+                        @if (status.ContainsKey("SerpAPI_Working"))
+                        {
+                            <span class="badge @(status["SerpAPI_Working"].ToString() == "True" ? "bg-success" : "bg-warning") ms-1">
+                                @(status["SerpAPI_Working"].ToString() == "True" ? "Working" : "Not Working")
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <h5>Configuration Details</h5>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Provider</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Google CSE</td>
+                        <td>
+                            @if (status["GoogleCSE_Configured"].ToString() == "True")
+                            {
+                                <span class="text-success">✓ Configured</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger">✗ Not Configured</span>
+                            }
+                        </td>
+                        <td>
+                            @if (status.ContainsKey("GoogleCSE_Working"))
+                            {
+                                @(status["GoogleCSE_Working"].ToString() == "True" ? "API is working" : "API test failed")
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not tested</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>SerpAPI</td>
+                        <td>
+                            @if (status["SerpAPI_Configured"].ToString() == "True")
+                            {
+                                <span class="text-success">✓ Configured</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger">✗ Not Configured</span>
+                            }
+                        </td>
+                        <td>
+                            @if (status.ContainsKey("SerpAPI_Working"))
+                            {
+                                @(status["SerpAPI_Working"].ToString() == "True" ? "API is working" : "API test failed")
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not tested</span>
+                            }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">
+        <h4>No Status Information Available</h4>
+        <p>The provider status information could not be retrieved.</p>
+    </div>
+}
+
+<div class="mt-3">
+    <a href="/Home/TestSerpAPI" class="btn btn-primary">Test SerpAPI</a>
+    <a href="/" class="btn btn-secondary">Back to Home</a>
+</div> 

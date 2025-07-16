@@ -1,0 +1,276 @@
+﻿@page "/scoring/{questionId:int}"
+@layout GameLayout
+@using IQGame.Client.Services
+@using IQGame.Application.Models.Session
+@using IQGame.Shared.Models
+@inject SessionService SessionService
+@inject GameStateService GameState
+@inject NavigationManager NavManager
+
+<div class="question-view-page">
+    <GameHeader Title="@GameState.SessionName" OnSwitchTeam="SwitchTeam" />
+
+    <div class="question-view-body">
+        <div class="sidebar-panel">
+            <div class="teams-scores">
+                @if (Team1 != null && Team2 != null)
+                {
+                    <div class="team-score-card team-1 @(Team1.Name == GameState.CurrentTurn ? "active-team" : "")">
+                        <h3 class="team-name">@Team1.Name</h3>
+                        <p class="team-score">@Team1.Score</p>
+                        <div class="team-help">
+                            <div class="help-indicator used" title="خيارات">
+                                <img src="images/helptools/brain.png" alt="خيارات" class="help-icon" />
+                                <span class="help-label">خيارات</span>
+                            </div>
+                            <div class="help-indicator used" title="إجابتين">
+                                <img src="images/helptools/peace.png" alt="إجابتين" class="help-icon" />
+                                <span class="help-label">إجابتين</span>
+                            </div>
+                            <div class="help-indicator used" title="دبل">
+                                <img src="images/helptools/target.png" alt="دبل" class="help-icon" />
+                                <span class="help-label">دبل</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-score-card team-2 @(Team2.Name == GameState.CurrentTurn ? "active-team" : "")">
+                        <h3 class="team-name">@Team2.Name</h3>
+                        <p class="team-score">@Team2.Score</p>
+                        <div class="team-help">
+                            <div class="help-indicator used" title="خيارات">
+                                <img src="images/helptools/brain.png" alt="خيارات" class="help-icon" />
+                                <span class="help-label">خيارات</span>
+                            </div>
+                            <div class="help-indicator used" title="إجابتين">
+                                <img src="images/helptools/peace.png" alt="إجابتين" class="help-icon" />
+                                <span class="help-label">إجابتين</span>
+                            </div>
+                            <div class="help-indicator used" title="دبل">
+                                <img src="images/helptools/target.png" alt="دبل" class="help-icon" />
+                                <span class="help-label">دبل</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="return-badge" @onclick="ReturnToAnswer">
+                <span>العودة للإجابة</span>
+                <i class="fas fa-arrow-left"></i>
+            </div>
+        </div>
+        <div class="quiz-main-panel">
+            <div class="quiz-content">
+                <div class="quiz-header">
+                    <span class="quiz-score">@Question.Points نقطة</span>
+                </div>
+                <div class="scoring-options">
+                    <h3 class="scoring-title">مين جاوب السؤال صح؟</h3>
+                    <div class="scoring-buttons">
+                        <button class="no-answer-btn" @onclick="() => SubmitScore(null)">
+                            محد جاوب
+                        </button>
+                        @if (Team1 != null && Team2 != null)
+                        {
+                            <div class="teams-row">
+                                <button class="team1-score-btn" @onclick="() => SubmitScore(Team1.Name)">
+                                    @Team1.Name
+                                </button>
+                                <button class="team2-score-btn" @onclick="() => SubmitScore(Team2.Name)">
+                                    @Team2.Name
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="quiz-footer">
+                    <div style="flex:1"></div>
+                    <button class="answer-btn" @onclick="ReturnToAnswer">العودة للإجابة</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+@if (showImageModal)
+{
+    <div class="image-modal-overlay" @onclick="CloseImageModal">
+        <div class="image-modal-content" @onclick:stopPropagation="true">
+            <button class="image-modal-close" @onclick="CloseImageModal">×</button>
+            <img src="@modalImageUrl" alt="Full size image" />
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int questionId { get; set; }
+
+    private SessionQuestionViewModel Question = new();
+    private TeamViewModel? Team1 { get; set; }
+    private TeamViewModel? Team2 { get; set; }
+    private bool showImageModal = false;
+    private string? modalImageUrl;
+
+    protected override void OnInitialized()
+    {
+        // Game flow initialization
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GameState.InitializeAsync();
+        if (GameState.SessionId == 0)
+        {
+            NavManager.NavigateTo("/session-setup");
+            return;
+        }
+
+        var allCategoriesTask = SessionService.GetSessionQuestionsAsync(GameState.SessionId);
+        var gameStatusTask = SessionService.GetGameStatusAsync(GameState.SessionId);
+        await Task.WhenAll(allCategoriesTask, gameStatusTask);
+
+        var allCategories = await allCategoriesTask;
+        Question = allCategories.SelectMany(c => c.Questions).FirstOrDefault(q => q.QuestionId == questionId) ?? new();
+        
+        var gameStatus = await gameStatusTask;
+        if (gameStatus != null)
+        {
+            GameState.SessionName = gameStatus.SessionName;
+            GameState.Team1 = gameStatus.Team1Name;
+            GameState.Team2 = gameStatus.Team2Name;
+            GameState.CurrentTurn = gameStatus.CurrentTurn;
+            
+            Team1 = new TeamViewModel { Name = gameStatus.Team1Name, Score = gameStatus.Team1Score, HelpTools = gameStatus.Team1Help };
+            Team2 = new TeamViewModel { Name = gameStatus.Team2Name, Score = gameStatus.Team2Score, HelpTools = gameStatus.Team2Help };
+
+            await GameState.SaveAsync();
+        }
+    }
+
+    private async Task SwitchTeam()
+    {
+        if (Team1 is null || Team2 is null) return;
+        
+        var currentTeamName = GameState.CurrentTurn;
+        var nextTeamName = currentTeamName == Team1.Name ? Team2.Name : Team1.Name;
+        
+        var success = await SessionService.ChangeTurnAsync(GameState.SessionId, nextTeamName);
+        if (success)
+        {
+            GameState.CurrentTurn = nextTeamName;
+            await GameState.SaveAsync();
+        }
+    }
+
+    private async Task SubmitScore(string? teamName)
+    {
+        Console.WriteLine($"🔍 [Scoring] SubmitScore called with teamName: '{teamName}'");
+        Console.WriteLine($"🔍 [Scoring] SessionId: {GameState.SessionId}, QuestionId: {questionId}");
+        
+        var request = new ScoreQuestionRequest
+        {
+            SessionId = GameState.SessionId,
+            QuestionId = questionId,
+            TeamName = teamName
+        };
+
+        Console.WriteLine($"🔍 [Scoring] ScoreQuestionRequest created - SessionId: {request.SessionId}, QuestionId: {request.QuestionId}, TeamName: '{request.TeamName}'");
+
+        var success = await SessionService.ScoreQuestionAsync(request);
+        Console.WriteLine($"🔍 [Scoring] ScoreQuestionAsync result: {success}");
+
+        if (success)
+        {
+            Console.WriteLine($"🔍 [Scoring] Scoring successful, refreshing game status");
+            
+            // Refresh game status to get updated help tool states
+            var status = await SessionService.GetGameStatusAsync(GameState.SessionId);
+            Console.WriteLine($"🔍 [Scoring] Game status - GameFinished: {status?.GameFinished}, TotalQuestionsAnswered: {status?.TotalQuestionsAnswered}");
+            
+            if (status != null)
+            {
+                // Update local team data with fresh help tool states
+                if (Team1 != null && status.Team1Help != null)
+                {
+                    Team1.HelpTools = status.Team1Help;
+                }
+                if (Team2 != null && status.Team2Help != null)
+                {
+                    Team2.HelpTools = status.Team2Help;
+                }
+                
+                // Update GameState with fresh data
+                GameState.SessionName = status.SessionName;
+                GameState.Team1 = status.Team1Name;
+                GameState.Team2 = status.Team2Name;
+                GameState.CurrentTurn = status.CurrentTurn;
+                await GameState.SaveAsync();
+            }
+            
+            if (status?.GameFinished == true)
+            {
+                Console.WriteLine($"🔍 [Scoring] Game is finished, navigating to results");
+                NavManager.NavigateTo("/results");
+            }
+            else
+            {
+                Console.WriteLine($"🔍 [Scoring] Game not finished, updating turn");
+                
+                // Update turn for next round
+                var nextTeam = GameState.CurrentTurn == GameState.Team1 ? GameState.Team2 : GameState.Team1;
+                Console.WriteLine($"🔍 [Scoring] Current turn: {GameState.CurrentTurn}, Next team: {nextTeam}");
+                
+                var turnChangeSuccess = await SessionService.ChangeTurnAsync(GameState.SessionId, nextTeam);
+                Console.WriteLine($"🔍 [Scoring] ChangeTurnAsync result: {turnChangeSuccess}");
+                
+                if (turnChangeSuccess)
+                {
+                    GameState.CurrentTurn = nextTeam;
+                    Console.WriteLine($"🔍 [Scoring] Turn updated to: {GameState.CurrentTurn}");
+                }
+                
+                NavManager.NavigateTo($"/gameboard/{GameState.SessionId}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"❌ [Scoring] Scoring failed, navigating back to gameboard");
+            // Optional: handle scoring failure
+            NavManager.NavigateTo($"/gameboard/{GameState.SessionId}");
+        }
+    }
+
+    private void ReturnToAnswer()
+    {
+        NavManager.NavigateTo($"/answer/{questionId}");
+    }
+
+    private void ShowImageModal(string? imageUrl)
+    {
+        if (!string.IsNullOrEmpty(imageUrl))
+        {
+            showImageModal = true;
+            modalImageUrl = imageUrl;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseImageModal()
+    {
+        showImageModal = false;
+    }
+
+    public void Dispose()
+    {
+        // Do not show the navigation when component is disposed
+        // GameState.HideNavigation = false; // Keep navigation hidden
+    }
+
+    public class TeamViewModel
+    {
+        public string? Name { get; set; }
+        public int Score { get; set; }
+        public TeamHelpStatus? HelpTools { get; set; }
+    }
+}

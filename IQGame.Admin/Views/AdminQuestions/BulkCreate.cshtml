@@ -1,0 +1,99 @@
+﻿@model IQGame.Admin.Models.BulkCreateViewModel
+
+@{
+    ViewData["Title"] = "Bulk Create Questions";
+}
+
+<div class="container" dir="rtl">
+    <h1 class="text-right mb-4">إنشاء أسئلة متعددة</h1>
+
+    <div class="row">
+        <div class="col-md-12">
+            <form asp-action="BulkCreate">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" name="returnCategoryId" value="@Context.Request.Query["categoryId"]" />
+                <input type="hidden" name="returnDifficulty" value="@Context.Request.Query["difficulty"]" />
+
+                <div class="form-group mb-3">
+                    <label asp-for="CategoryId" class="control-label">الفئة</label>
+                    <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Difficulty" class="control-label">مستوى الصعوبة</label>
+                    <select asp-for="Difficulty" class="form-control">
+                        <option value="1">سهل</option>
+                        <option value="2">متوسط</option>
+                        <option value="3">صعب</option>
+                    </select>
+                    <span asp-validation-for="Difficulty" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="BulkInput" class="control-label">الأسئلة</label>
+                    <textarea asp-for="BulkInput" class="form-control text-right" style="min-height: 300px; direction: rtl;" 
+                              placeholder="السؤال الأول
+الإجابة1|الإجابة2|الإجابة3|الإجابة4
+الإجابة الصحيحة
+بحث صورة السؤال (اكتب 'none' لاستخدام الصورة الافتراضية)
+بحث صورة الإجابة الصحيحة (اكتب 'none' لاستخدام الصورة الافتراضية)
+
+السؤال الثاني
+الإجابة1|الإجابة2|الإجابة3|الإجابة4
+الإجابة الصحيحة
+none
+none"></textarea>
+                    <span asp-validation-for="BulkInput" class="text-danger"></span>
+                </div>
+
+                <div class="alert alert-info" role="alert">
+                    <h5>تعليمات:</h5>
+                    <p><strong>كل سؤال يجب أن يكون في 5 أسطر:</strong></p>
+                    <ul class="mb-0">
+                        <li>السطر الأول: نص السؤال</li>
+                        <li>السطر الثاني: 4 إجابات مفصولة بـ |</li>
+                        <li>السطر الثالث: الإجابة الصحيحة (يجب أن تطابق إحدى الإجابات في السطر الثاني)</li>
+                        <li>السطر الرابع: بحث صورة السؤال (اكتب 'none' أو 'null' أو '-' لاستخدام الصورة الافتراضية للسؤال)</li>
+                        <li>السطر الخامس: بحث صورة الإجابة الصحيحة (اكتب 'none' أو 'null' أو '-' لاستخدام الصورة الافتراضية للإجابة)</li>
+                    </ul>
+                    <p class="mt-2 mb-0"><small><strong>ملاحظة:</strong> الإجابات الخاطئة ستستخدم دائماً الصورة الافتراضية للإجابات.</small></p>
+                </div>
+
+                <div class="form-group">
+                    <input type="submit" value="إنشاء" class="btn btn-primary" />
+                    <a asp-action="Index" asp-route-categoryId="@Context.Request.Query["categoryId"]" asp-route-difficulty="@Context.Request.Query["difficulty"]" class="btn btn-secondary">عودة للقائمة</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+
+        .form-control {
+            font-size: 1.1em;
+        }
+
+        textarea.form-control {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        label.control-label {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

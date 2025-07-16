@@ -1,0 +1,92 @@
+@model IQGame.Shared.Models.Group
+
+@{
+    ViewData["Title"] = "Group Details";
+}
+
+<h1>Group Details</h1>
+
+<div>
+    <h4>Group</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class="col-sm-10">
+            <strong>@Html.DisplayFor(model => model.Name)</strong>
+        </dd>
+        
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Description)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Description)
+        </dd>
+        
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Color)
+        </dt>
+        <dd class="col-sm-10">
+            @if (!string.IsNullOrEmpty(Model.Color))
+            {
+                <span class="badge" style="background-color: @Model.Color; color: white;">@Model.Color</span>
+            }
+            else
+            {
+                <span class="text-muted">No color set</span>
+            }
+        </dd>
+        
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DisplayOrder)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DisplayOrder)
+        </dd>
+        
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.IsActive)
+        </dt>
+        <dd class="col-sm-10">
+            @if (Model.IsActive)
+            {
+                <span class="badge bg-success">Active</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Inactive</span>
+            }
+        </dd>
+        
+        <dt class="col-sm-2">
+            Categories
+        </dt>
+        <dd class="col-sm-10">
+            @if (Model.Categories != null && Model.Categories.Any())
+            {
+                <div class="list-group">
+                    @foreach (var category in Model.Categories)
+                    {
+                        <div class="list-group-item">
+                            <strong>@category.Name</strong>
+                            @if (!string.IsNullOrEmpty(category.Description))
+                            {
+                                <br />
+                                <small class="text-muted">@category.Description</small>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <span class="text-muted">No categories assigned to this group</span>
+            }
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div> 

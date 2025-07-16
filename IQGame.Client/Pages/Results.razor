@@ -1,0 +1,910 @@
+﻿@page "/results"
+@layout GameLayout
+@using IQGame.Application.Models.Session
+@using IQGame.Client.Services
+@inject SessionService SessionService
+@inject GameStateService GameState
+@inject NavigationManager NavManager
+
+<div class="results-page">
+    <GameHeader Title="النتائج النهائية" ShowTeamInfo="false" ExitText="لعبة جديدة" ExitUrl="/" />
+
+    <div class="results-content">
+        @if (result == null)
+        {
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">جارٍ تحميل النتائج...</p>
+            </div>
+        }
+        else
+        {
+            <!-- Winner Celebration Section -->
+            <div class="winner-celebration">
+                <div class="winner-badge">
+                    <div class="trophy-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="winner-text">
+                        <h2 class="winner-label">الفائز</h2>
+                        <h1 class="winner-name">@result.Winner</h1>
+                        <div class="winner-score">
+                            <span class="score-label">النقاط النهائية</span>
+                            <span class="final-score">@(result.Winner == result.Team1.Name ? result.Team1.Score : result.Team2.Score)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="celebration-effects">
+                    <div class="confetti confetti-1"></div>
+                    <div class="confetti confetti-2"></div>
+                    <div class="confetti confetti-3"></div>
+                    <div class="confetti confetti-4"></div>
+                    <div class="confetti confetti-5"></div>
+                </div>
+            </div>
+
+            <!-- Teams Comparison Section -->
+            <div class="teams-comparison">
+                <div class="team-card @(result.Winner == result.Team1.Name ? "winner" : "runner-up")">
+                    <div class="team-header">
+                        <div class="team-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="team-name">@result.Team1.Name</h3>
+                        @if (result.Winner == result.Team1.Name)
+                        {
+                            <div class="winner-indicator">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                        }
+                    </div>
+                    <div class="team-score">
+                        <span class="score-number">@result.Team1.Score</span>
+                        <span class="score-label">نقطة</span>
+                    </div>
+                    <div class="team-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>الإجابات الصحيحة</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-star"></i>
+                            <span>أفضل فئة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vs-divider">
+                    <div class="vs-circle">
+                        <span>VS</span>
+                    </div>
+                </div>
+
+                <div class="team-card @(result.Winner == result.Team2.Name ? "winner" : "runner-up")">
+                    <div class="team-header">
+                        <div class="team-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="team-name">@result.Team2.Name</h3>
+                        @if (result.Winner == result.Team2.Name)
+                        {
+                            <div class="winner-indicator">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                        }
+                    </div>
+                    <div class="team-score">
+                        <span class="score-number">@result.Team2.Score</span>
+                        <span class="score-label">نقطة</span>
+                    </div>
+                    <div class="team-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>الإجابات الصحيحة</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-star"></i>
+                            <span>أفضل فئة</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Breakdown Section -->
+            <div class="category-breakdown">
+                <div class="section-header">
+                    <h3>تفاصيل النقاط حسب الفئة</h3>
+                    <p>تحليل أداء كل فريق في الفئات المختلفة</p>
+                </div>
+                <div class="categories-grid">
+                    @foreach (var cat in result.Categories)
+                    {
+                        var team1Wins = cat.Team1Points > cat.Team2Points;
+                        var team2Wins = cat.Team2Points > cat.Team1Points;
+                        var isTie = cat.Team1Points == cat.Team2Points;
+                        
+                        <div class="category-result-card">
+                            <div class="category-header">
+                                <h4 class="category-name">@cat.CategoryName</h4>
+                                @if (isTie)
+                                {
+                                    <div class="category-winner tie">
+                                        <i class="fas fa-equals"></i>
+                                    </div>
+                                }
+                                else if (team1Wins)
+                                {
+                                    <div class="category-winner team1">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="category-winner team2">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                }
+                            </div>
+                            <div class="category-scores">
+                                <div class="score-item @(team1Wins ? "winner" : "")">
+                                    <span class="team-label">@result.Team1.Name</span>
+                                    <span class="points">@cat.Team1Points</span>
+                                </div>
+                                <div class="score-item @(team2Wins ? "winner" : "")">
+                                    <span class="team-label">@result.Team2.Name</span>
+                                    <span class="points">@cat.Team2Points</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Game Summary Section -->
+            <div class="game-summary">
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <i class="fas fa-chart-bar"></i>
+                        <h3>ملخص اللعبة</h3>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="summary-stat">
+                            <span class="stat-value">@result.Categories.Count</span>
+                            <span class="stat-label">فئة</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="stat-value">@(result.Categories.Count * 6)</span>
+                            <span class="stat-label">سؤال</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="stat-value">@(result.Team1.Score + result.Team2.Score)</span>
+                            <span class="stat-label">نقطة إجمالية</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn-primary" @onclick="PlayAgain">
+                    <i class="fas fa-redo"></i>
+                    <span>لعب مرة أخرى</span>
+                </button>
+                <button class="btn-secondary" @onclick="GoHome">
+                    <i class="fas fa-home"></i>
+                    <span>العودة للرئيسية</span>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--gradient-primary);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-green);
+    }
+
+    /* Results Page Styles */
+    .results-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, rgba(108, 63, 197, 0.1) 0%, rgba(10, 106, 78, 0.05) 100%);
+        padding-bottom: 2rem;
+    }
+
+    .results-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Loading Styles */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        gap: 2rem;
+    }
+
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(108, 63, 197, 0.2);
+        border-top: 4px solid var(--primary-purple);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+        font-size: 1.2rem;
+        color: var(--dark-gray);
+        font-weight: 500;
+    }
+
+    /* Winner Celebration Section */
+    .winner-celebration {
+        text-align: center;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .winner-badge {
+        background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        border-radius: 2rem;
+        padding: 3rem 2rem;
+        box-shadow: 
+            0 20px 40px rgba(108, 63, 197, 0.3),
+            0 10px 20px rgba(0, 0, 0, 0.1),
+            0 0 30px rgba(255, 215, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        position: relative;
+        z-index: 2;
+        backdrop-filter: blur(10px);
+    }
+
+    .trophy-icon {
+        font-size: 4rem;
+        color: #FFD700;
+        margin-bottom: 1rem;
+        animation: bounce 2s infinite;
+        text-shadow: 
+            0 2px 4px rgba(0, 0, 0, 0.3),
+            0 0 20px rgba(255, 215, 0, 0.5),
+            0 0 40px rgba(255, 215, 0, 0.3);
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    }
+
+    @@keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+    }
+
+    .winner-label {
+        font-size: 1.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .winner-name {
+        font-size: 3rem;
+        color: white;
+        margin-bottom: 1rem;
+        font-weight: bold;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .winner-score {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .score-label {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .final-score {
+        font-size: 2.5rem;
+        color: #FFD700;
+        font-weight: bold;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Celebration Effects */
+    .celebration-effects {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #FFD700;
+        animation: confetti-fall 3s linear infinite;
+    }
+
+    .confetti-1 { left: 10%; animation-delay: 0s; background: #FF6B6B; }
+    .confetti-2 { left: 20%; animation-delay: 0.5s; background: #4ECDC4; }
+    .confetti-3 { left: 30%; animation-delay: 1s; background: #45B7D1; }
+    .confetti-4 { left: 40%; animation-delay: 1.5s; background: #96CEB4; }
+    .confetti-5 { left: 50%; animation-delay: 2s; background: #FFEAA7; }
+
+    @@keyframes confetti-fall {
+        0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Teams Comparison Section */
+    .teams-comparison {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 2rem;
+        align-items: center;
+        margin-bottom: 3rem;
+    }
+
+    .team-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 
+            0 8px 25px rgba(0, 0, 0, 0.1),
+            0 4px 10px rgba(0, 0, 0, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 2px solid transparent;
+    }
+
+    .team-card.winner {
+        border: 3px solid #FFD700;
+        box-shadow: 
+            0 12px 35px rgba(255, 215, 0, 0.3),
+            0 0 20px rgba(255, 215, 0, 0.2),
+            inset 0 0 20px rgba(255, 215, 0, 0.1);
+        transform: scale(1.05);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 215, 0, 0.05) 100%);
+    }
+
+    .team-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 
+            0 15px 35px rgba(0, 0, 0, 0.15),
+            0 8px 20px rgba(0, 0, 0, 0.1),
+            0 0 20px rgba(108, 63, 197, 0.1);
+    }
+
+    .team-card.winner:hover {
+        transform: scale(1.05) translateY(-5px);
+    }
+
+    .team-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .team-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 
+            0 4px 12px rgba(108, 63, 197, 0.3),
+            0 2px 6px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .team-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--dark-gray);
+        margin: 0;
+    }
+
+    .winner-indicator {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 30px;
+        height: 30px;
+        background: #FFD700;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        animation: pulse 2s infinite;
+        box-shadow: 
+            0 4px 12px rgba(255, 215, 0, 0.4),
+            0 2px 6px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    @@keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .team-score {
+        margin-bottom: 1.5rem;
+    }
+
+    .score-number {
+        display: block;
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--primary-purple);
+        line-height: 1;
+    }
+
+    .score-label {
+        font-size: 1rem;
+        color: var(--dark-gray);
+        font-weight: 500;
+    }
+
+    .team-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--dark-gray);
+    }
+
+    .stat-item i {
+        color: var(--primary-green);
+    }
+
+    /* VS Divider */
+    .vs-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .vs-circle {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+        box-shadow: 
+            0 8px 25px rgba(108, 63, 197, 0.3),
+            0 4px 12px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Category Breakdown Section */
+    .category-breakdown {
+        margin-bottom: 3rem;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .section-header h3 {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-purple);
+        margin-bottom: 0.5rem;
+    }
+
+    .section-header p {
+        color: var(--dark-gray);
+        font-size: 1.1rem;
+    }
+
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .category-result-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 
+            0 4px 15px rgba(0, 0, 0, 0.1),
+            0 2px 8px rgba(0, 0, 0, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .category-result-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 
+            0 8px 25px rgba(0, 0, 0, 0.15),
+            0 4px 12px rgba(0, 0, 0, 0.1),
+            0 0 15px rgba(108, 63, 197, 0.1);
+    }
+
+    .category-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .category-name {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--dark-gray);
+        margin: 0;
+    }
+
+    .category-winner {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.9rem;
+        box-shadow: 
+            0 2px 8px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .category-winner.team1 {
+        background: var(--primary-purple);
+    }
+
+    .category-winner.team2 {
+        background: var(--primary-green);
+    }
+
+    .category-winner.tie {
+        background: #FFA500;
+    }
+
+    .category-scores {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .score-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        background: rgba(108, 63, 197, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .score-item.winner {
+        background: rgba(255, 215, 0, 0.2);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+    }
+
+    .team-label {
+        font-weight: 500;
+        color: var(--dark-gray);
+    }
+
+    .points {
+        font-weight: bold;
+        color: var(--primary-purple);
+        font-size: 1.1rem;
+    }
+
+    /* Game Summary Section */
+    .game-summary {
+        margin-bottom: 3rem;
+    }
+
+    .summary-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        box-shadow: 
+            0 8px 25px rgba(0, 0, 0, 0.1),
+            0 4px 12px rgba(0, 0, 0, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    .summary-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .summary-header i {
+        font-size: 2rem;
+        color: var(--primary-purple);
+        text-shadow: 0 2px 4px rgba(108, 63, 197, 0.3);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .summary-header h3 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--dark-gray);
+        margin: 0;
+    }
+
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 2rem;
+    }
+
+    .summary-stat {
+        text-align: center;
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--primary-purple);
+        line-height: 1;
+        text-shadow: 0 2px 4px rgba(108, 63, 197, 0.2);
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: var(--dark-gray);
+        font-weight: 500;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary, .btn-secondary {
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 2rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        min-width: 180px;
+        justify-content: center;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        color: white;
+        box-shadow: 
+            0 4px 15px rgba(108, 63, 197, 0.3),
+            0 2px 8px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--primary-purple);
+        border: 2px solid rgba(108, 63, 197, 0.3);
+        backdrop-filter: blur(10px);
+        box-shadow: 
+            0 4px 12px rgba(0, 0, 0, 0.1),
+            0 2px 6px rgba(0, 0, 0, 0.05),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(108, 63, 197, 0.4);
+        background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-purple) 100%);
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-3px);
+        background: rgba(255, 255, 255, 0.95);
+        border-color: var(--primary-purple);
+        box-shadow: 0 8px 25px rgba(108, 63, 197, 0.2);
+        color: var(--primary-purple);
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .results-content {
+            padding: 1rem;
+        }
+
+        .teams-comparison {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .vs-divider {
+            order: -1;
+        }
+
+        .vs-circle {
+            width: 60px;
+            height: 60px;
+            font-size: 1rem;
+        }
+
+        .winner-name {
+            font-size: 2rem;
+        }
+
+        .final-score {
+            font-size: 2rem;
+        }
+
+        .categories-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .summary-stats {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .trophy-icon {
+            font-size: 3rem;
+        }
+
+        .score-number {
+            font-size: 2.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .winner-badge {
+            padding: 2rem 1rem;
+        }
+
+        .winner-name {
+            font-size: 1.8rem;
+        }
+
+        .final-score {
+            font-size: 1.8rem;
+        }
+
+        .team-card {
+            padding: 1.5rem;
+        }
+
+        .team-name {
+            font-size: 1.3rem;
+        }
+
+        .score-number {
+            font-size: 2rem;
+        }
+
+        .category-result-card {
+            padding: 1rem;
+        }
+
+        .summary-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+
+@code {
+    private SessionResultViewModel? result;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GameState.InitializeAsync();
+        if (GameState.SessionId > 0)
+        {
+            result = await SessionService.GetSessionResultsAsync(GameState.SessionId);
+        }
+        else
+        {
+            NavManager.NavigateTo("/"); // No session, go home
+        }
+    }
+
+    private void PlayAgain()
+    {
+        NavManager.NavigateTo("/session-setup");
+    }
+
+    private void GoHome()
+    {
+        NavManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        // Cleanup if needed
+    }
+}

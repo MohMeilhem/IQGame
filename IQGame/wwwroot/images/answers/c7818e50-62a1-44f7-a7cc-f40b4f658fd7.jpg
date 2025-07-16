@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<!-- Google Tag Manager -->
+	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,'script','dataLayer','GTM-P6CRL2PV');</script>
+	<!-- End Google Tag Manager -->
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	
+	<title>Award-Winning Visual Content | MediVisuals + High Impact</title><meta name='description' content='High Impact is a full-service technical animation studio that uses cutting-edge technologies to deliver visually stunning content.' /><link rel='canonical' href='https://www.highimpact.com' /><meta name='robots' content='INDEX, FOLLOW' /><!-- Open Graph --><meta property='og:title' content='Award-Winning Visual Content | High Impact, LLC' /><meta property='og:description' content='High Impact is a full-service technical animation studio that uses cutting-edge technologies to deliver visually stunning content.' /><meta property='og:type' content='article' /><meta property='og:image' content='https://www.highimpact.com/images/uploads/common/hi-og.png' /><!-- Twitter Card --><meta property='twitter:title' content='Award-Winning Visual Content | High Impact, LLC' /><meta property='twitter:card' content='summary' /><meta property='twitter:description' content='High Impact is a full-service technical animation studio that uses cutting-edge technologies to deliver visually stunning content.' /><meta property='twitter:image' content='https://www.highimpact.com/images/uploads/common/hi-og.png' />
+	
+
+	
+
+	<link rel="icon" href="/images/favvy-hi/favicon.ico" sizes="any">
+	<link rel="icon" href="/images/favvy-hi/favicon.svg" type="image/svg+xml">
+	<link rel="apple-touch-icon" href="/images/favvy-hi/apple-touch-icon.png">
+	<link rel="manifest" href="/images/favvy-hi/site.webmanifest">
+	<meta name="theme-color" content="#262D36">
+
+	<script type="module" crossorigin src="/build/assets/app21.js?1749746922"></script>
+	<link href="/build/assets/style.css?1749746936" rel="stylesheet" />
+
+</head>
+<body>
+
+	<!-- Google Tag Manager (noscript) -->
+	<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P6CRL2PV"
+	height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+	<!-- End Google Tag Manager (noscript) -->
+
+	<div class="wrapper js-wrapper">
+		<span class="page-overlay js-page-overlay"></span>
+
+		<span class="page-overlay-dark js-page-overlay"></span>
+		 <header class="header js-header">
+
+			<!-- <div class="alert header__alert js-alert">
+				<div class="alert__inner">
+					<div class="alert__entry">
+						<p>15% Off Your First Medical Illustration – <a href="https://www.highimpact.com/15-percent-off-your-first-medical-illustration">Learn more</a></p>
+					</div>
+
+					<a href="#" class="alert__close-btn">
+						<i class="ph ph-x"></i>
+					</a>
+				</div>
+			</div> -->
+
+			<span class="header__blur"></span>
+
+			<div class="header__inner">
+				<a href="#" class="btn header__btn js-form-open">Get started</a>
+
+				<div class="header__form">
+	<div class="form-starter">
+		<div class="form__head">
+			<div class="form__exit">
+				<a href="#" class="btn js-form-exit">
+					<img loading="lazy" src="/images/jcogs_img/cache/exit-icon_-_abcdef_-_a0610e593ec9f594af839480b32db9b54e76249e.svg" width="20" height="20" alt="Close project starter" role="img">
+				</a><!-- /.btn -->
+			</div><!-- /.form__exit -->
+
+			<div class="form__text">
+				<p>Project starter</p>
+			</div><!-- /.form__text -->
+		</div><!-- /.form__head -->
+
+		<div class="form__progress js-form-progress">
+			<span style="width:25%;"></span>
+		</div><!-- /.form__progress -->
+
+		<div class="form__entry">
+			<form action="#" class="js-form-starter">
+				<div class="form__sections">
+					<div class="form__section is-active">
+						<div class="form__title">
+							<p class="form-heading">Ready to dive in! What services do you require?</p>
+
+							<p>Please select at least one.</p>
+						</div><!-- /.form__title -->
+
+						<div class="form__group">
+							<div class="form__controls form__controls--checkboxes">
+								<div class="form__checkbox">
+									<div class="checkbox">
+										<input type="checkbox" name="services" id="illustration" value="Illustration">
+
+										<label for="illustration">Illustration</label>
+									</div><!-- /.checkbox -->
+								</div><!-- /.form__checkbox -->
+
+								<div class="form__checkbox">
+									<div class="checkbox">
+										<input type="checkbox" name="services" id="animation" value="3D Animation">
+
+										<label for="animation">3D Animation</label>
+									</div><!-- /.checkbox -->
+								</div><!-- /.form__checkbox -->
+
+								<div class="form__checkbox">
+									<div class="checkbox">
+										<input type="checkbox" name="services" id="interactive" value="Interactive Presentation">
+
+										<label for="interactive">Interactive Presentations</label>
+									</div><!-- /.checkbox -->
+								</div><!-- /.form__checkbox -->
+
+								<div class="form__checkbox">
+									<div class="checkbox">
+										<input type="checkbox" name="services" id="other" value="Other">
+
+										<label for="other">Not sure/Other</label>
+									</div><!-- /.checkbox -->
+								</div><!-- /.form__checkbox -->
+							</div><!-- /.form__controls -->
+						</div><!-- /.form__group -->
+					</div><!-- /.form__section -->
+
+					<div class="form__section">
+						<div class="form__title">
+							<p class="form-heading">Tell us about your project</p>
+						</div><!-- /.form__title -->
+
+						<div class="form__group">
+							<div class="form__row">
+								<div class="form__cols">
+									<div class="form__col">
+										<div class="form__controls">
+											<input type="text" placeholder="Project / Case name" id="project-name" name="project-name" required >
+										</div><!-- /.form__controls -->
+									</div><!-- /.form__col -->
+
+									<div class="form__col">
+										<input type="text" placeholder="Deadline" id="deadline" name="deadline">
+									</div><!-- /.form__col -->
+								</div><!-- /.form__cols -->
+							</div><!-- /.form__row -->
+
+							<div class="form__row form__row--textarea">
+								<div class="form__controls">
+									<textarea name="description" id="description" placeholder="Description (be as brief or detailed as you’d like)..." required></textarea><!-- /# -->
+								</div><!-- /.form__controls -->
+							</div><!-- /.form__row -->
+						</div><!-- /.form__group -->
+					</div><!-- /.form__section -->
+
+					<div class="form__section has-submit">
+						<div class="form__title">
+							<p class="form-heading">Your details</p>
+						</div><!-- /.form__title -->
+
+						<div class="form__group">
+							<div class="form__row">
+								<div class="form__cols">
+									<div class="form__col">
+										<div class="form__controls">
+											<input type="text" placeholder="Your name" id="name" name="name" required>
+										</div><!-- /.form__controls -->
+									</div><!-- /.form__col -->
+
+									<div class="form__col">
+										<input type="email" placeholder="Your email" id="email" name="email" required>
+									</div><!-- /.form__col -->
+								</div><!-- /.form__cols -->
+							</div><!-- /.form__row -->
+
+							<div class="form__row">
+								<div class="form__controls">
+									<input type="text" placeholder="Firm/Company" id="company" name="company" required>
+								</div><!-- /.form__controls -->
+							</div><!-- /.form__row -->
+
+							<div class="form__row">
+								<div class="form__cols">
+									<div class="form__col">
+										<div class="form__controls">
+											<input type="text" placeholder="State" id="state" name="state" required>
+										</div><!-- /.form__controls -->
+									</div><!-- /.form__col -->
+
+									<div class="form__col">
+										<input type="tel" placeholder="Phone number" id="phone" name="phone" required>
+									</div><!-- /.form__col -->
+								</div><!-- /.form__cols -->
+							</div><!-- /.form__row -->
+						</div><!-- /.form__group -->
+					</div><!-- /.form__section -->
+
+					<div class="form__section thank-message">
+						<div class="form__title">
+							<p class="form-heading">Thanks for contacting us!</p>
+
+							<p>A member of our team will be in touch as soon as possible. If you need immediate assistance, please give us a call at <a href="tel:8007492184">(800) 749-2184</a>.</p>
+						</div><!-- /.form__title -->
+					</div><!-- /.form__section -->
+				</div><!-- /.form__sections -->
+
+				<div class="form__foot">
+					<a href="#" class="form__prev js-prev is-hidden">
+						<img loading="lazy" src="/images/jcogs_img/cache/arrow-back_-_abcdef_-_a0610e593ec9f594af839480b32db9b54e76249e.svg" width="20" height="20" alt="Back" role="img">
+
+						<p>Back</p>
+					</a>
+
+					<a href="#" class="form__next js-next is-disabled">
+						<p>Continue</p>
+
+						<img loading="lazy" src="/images/jcogs_img/cache/arrow-next_-_abcdef_-_a0610e593ec9f594af839480b32db9b54e76249e.svg" width="20" height="20" alt="Next step" role="img">
+					</a>
+
+					<button type="submit" class="form__btn js-submit is-disabled">
+						<span>Submit</span>
+
+						<img loading="lazy" src="/images/jcogs_img/cache/arrow-next_-_abcdef_-_a0610e593ec9f594af839480b32db9b54e76249e.svg" width="20" height="20" alt="Next step" role="img">
+					</button>
+				</div><!-- /.form__foot -->
+			</form>
+		</div><!-- /.form__entry -->
+	</div><!-- /.form-starter -->
+</div><!-- /.header__form -->
+
+				<a href="#" class="search-trigger header__search-trigger-mobile js-search-trigger" aria-label="Search">
+					<i class="ph ph-magnifying-glass"></i>
+				</a>
+
+				<a href="https://www.highimpact.com/" class="logo header__logo" aria-label="MediVisuals + High Impact">
+
+				 	
+					<img src="/images/jcogs_img/cache/medi-hype_1_-_abcdef_-_dc68c50170446f9b500a2b6c904823fecd33c2a3.svg" width="320" height="44" alt="High Impact, LLC" role="img">
+					
+
+				</a>
+
+				<div class="header__aside">
+					<div class="header__utils">
+
+						
+
+						<a href="#" class="search-trigger header__search-trigger js-search-trigger">
+							<i class="ph ph-magnifying-glass"></i>
+						</a>
+
+						<a href="#" class="nav-trigger header__nav-trigger js-nav-trigger" aria-label="Open navigation menu">
+							<span></span>
+
+							<span></span>
+
+							<span></span>
+						</a>
+					</div><!-- /.header__utils -->
+
+					<div class="header__content js-search">
+						<div class="search header__search">
+							<form method="post" action="https://www.highimpact.com/"  >
+<div class='hiddenFields'>
+<input type="hidden" name="ACT" value="40" />
+<input type="hidden" name="site_id" value="1" />
+<input type="hidden" name="csrf_token" value="473222d85f622ecf241c4cffe347509f421d7a58" />
+</div>
+
+
+								<label for="keywords" class="hidden">Search</label>
+
+								<div class="search__controls">
+									<input type="search" name="keywords" id="keywords" value="" placeholder="Search case studies &amp; projects....." class="search__field">
+
+									<button type="submit" class="search__btn">
+										<i class="ph ph-magnifying-glass"></i>
+									</button>
+								</div><!-- /.search__controls -->
+							</form>
+						</div><!-- /.search -->
+
+						<a href="#" class="btn-search-exit js-btn-search-exit">
+							<i class ="ph ph-x"></i>
+						</a>
+					</div><!-- /.header__content -->
+				</div><!-- /.header__aside -->
+			</div><!-- /.header__inner -->
+
+			<div class="header__menu">
+				<div class="header__menu-inner">
+					<div class="header__menu-bar">
+						<a href="tel:8007492184" class="phone header__phone">
+							<i class="ph ph-phone-call"></i>
+
+							<span>Call &nbsp;(800) 749 2184</span>
+						</a>
+					</div><!-- /.header__menu-bar -->
+
+					<div class="header__menu-row">
+						<div class="badge badge--white">Company</div>
+
+						<nav class="nav header__nav">
+							<ul>
+								
+								<li>
+									<a href="/about">About</a>
+								</li>
+								
+								<li>
+									<a href="/our-team">Our Team</a>
+								</li>
+								
+								<li>
+									<a href="/projects">Projects</a>
+								</li>
+								
+								<li>
+									<a href="/cases-and-insights">Cases & Insights</a>
+								</li>
+								
+								<li>
+									<a href="/careers">Careers</a>
+								</li>
+								
+								<li>
+									<a href="/contact">Contact</a>
+								</li>
+								
+
+								<li>
+									<a href="https://www.highimpact.com/shop">Shop</a>
+								</li>
+							</ul>
+						</nav><!-- /.nav -->
+					</div><!-- /.header__menu-row -->
+
+					<div class="header__menu-row">
+						<div class="badge badge--white">Visual Strategies</div>
+
+						<nav class="nav header__nav">
+							<ul>
+								
+								<li>
+									<a href="/visual-strategies/personal-injury-trial-graphics">Personal Injury</a>
+								</li>
+								
+								<li>
+									<a href="/visual-strategies/medical-malpractice-trial-exhibits">Medical Malpractice</a>
+								</li>
+								
+								<li>
+									<a href="/visual-strategies/motor-vehicle-collisions">Crash Reconstruction</a>
+								</li>
+								
+								<li>
+									<a href="/visual-strategies/environmental-visuals">Environmental</a>
+								</li>
+								
+								<li>
+									<a href="/visual-strategies/product-liability-visuals">Product Liability</a>
+								</li>
+								
+								<li>
+									<a href="/visual-strategies/intellectual-property-visuals">Intellectual Property</a>
+								</li>
+								
+							</ul>
+						</nav><!-- /.nav -->
+					</div><!-- /.header__menu-row -->
+				</div><!-- /.header__menu-inner -->
+			</div><!-- /.header__menu -->
+		</header><!-- /.header -->
+
+		
+
+
+
+<div class="hero">
+	<div class="shell">
+		<div class="hero__content">
+			<h1>Powerful visuals for every phase of litigation</h1>
+
+			<p>MediVisuals + High Impact&nbsp;is&nbsp;a full-service illustration and animation studio, crafting award-winning visual content through compelling storytelling and cutting-edge technology.</p>
+
+			<a href="https://www.highimpact.com/about" class="btn hero__btn">Learn more</a>
+		</div><!-- /.hero__content -->
+
+		<div class="hero__media for-animation js-for-animation">
+			<script src="https://fast.wistia.com/assets/external/E-v1.js" async=""></script>
+
+			<div class="wistia_responsive_padding" style="padding:56.25% 0 0 0;position:relative;">
+				<div class="wistia_responsive_wrapper" style="height:100%;left:0;position:absolute;top:0;width:100%;">
+					<div class="wistia_embed wistia_async_ijqev1ouro autoPlay=true silentAutoPlay=true muted=true endVideoBehavior=loop controlsVisibleOnLoad=false videoFoam=true" style="height:100%;position:relative;width:100%">&nbsp;
+					</div>
+				</div>
+			</div>
+		</div>
+	</div><!-- /.shell -->
+</div><!-- /.hero -->
+
+<section class="section-basic">
+	<div class="shell">
+		<div class="section__actions for-animation-text js-for-animation-text">
+			<a href="#" class="btn-white section__btn-white">Visual Strategies</a>
+		</div><!-- /.section__actions -->
+
+		<ul class="list-links">
+
+			
+			<li class="for-animation-text js-for-animation-text" style="background-image:url('/images/jcogs_img/cache/bullet-skull_-_abcdef_-_e474eb9b62e73892c6e6cefa806a28e0041c03f6.webp')">
+				<a href="/visual-strategies/personal-injury-trial-graphics">Personal Injury</a>
+			</li>
+			
+			<li class="for-animation-text js-for-animation-text" style="background-image:url('/images/jcogs_img/cache/abscess_1_-_abcdef_-_e474eb9b62e73892c6e6cefa806a28e0041c03f6.webp')">
+				<a href="/visual-strategies/medical-malpractice-trial-exhibits">Medical Malpractice</a>
+			</li>
+			
+			<li class="for-animation-text js-for-animation-text" style="background-image:url('/images/jcogs_img/cache/van-crash2_-_abcdef_-_e474eb9b62e73892c6e6cefa806a28e0041c03f6.webp')">
+				<a href="/visual-strategies/motor-vehicle-collisions">Crash Reconstruction</a>
+			</li>
+			
+			<li class="for-animation-text js-for-animation-text" style="background-image:url('/images/jcogs_img/cache/lead_-_abcdef_-_e474eb9b62e73892c6e6cefa806a28e0041c03f6.webp')">
+				<a href="/visual-strategies/environmental-visuals">Environmental</a>
+			</li>
+			
+			<li class="for-animation-text js-for-animation-text" style="background-image:url('/images/jcogs_img/cache/computer_-_abcdef_-_e474eb9b62e73892c6e6cefa806a28e0041c03f6.webp')">
+				<a href="/visual-strategies/product-liability-visuals">Product Liability</a>
+			</li>
+			
+			<li class="for-animation-text js-for-animation-text" style="background-image:url('/images/jcogs_img/cache/helix_-_abcdef_-_e474eb9b62e73892c6e6cefa806a28e0041c03f6.webp')">
+				<a href="/visual-strategies/intellectual-property-visuals">Intellectual Property</a>
+			</li>
+			
+
+		</ul><!-- /.list-links -->
+	</div><!-- /.shell -->
+</section><!-- /.section-basic -->
+
+<div class="ticker">
+	<div class="swiper ticker__inner js-ticker ">
+		<ul class="swiper-wrapper">
+			<li class="swiper-slide">
+				<figure>
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-1_-_abcdef_-_d12c67f92c3c55e9310ca0fcb5d161b36d2fb5f1.svg" width="143" height="142" alt="Puma" role="img">
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-1-dark_-_abcdef_-_d12c67f92c3c55e9310ca0fcb5d161b36d2fb5f1.svg" width="143" height="142" alt="Puma" role="img">
+				</figure>
+			</li>
+
+			<li class="swiper-slide">
+				<figure>
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-2_-_abcdef_-_91bac7a0a74dbc3471f6966fde5107df81b081ef.svg" width="143" height="36" alt="ESPN" role="img">
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-2-dark_-_abcdef_-_91bac7a0a74dbc3471f6966fde5107df81b081ef.svg" width="143" height="36" alt="ESPN" role="img">
+				</figure>
+			</li>
+
+			<li class="swiper-slide">
+				<figure>
+					<img loading="lazy" src="/images/jcogs_img/cache/venable-dark_-_abcdef_-_6f937fddab4f337a1695b999f77ca46570b8b8c8.webp" width="143" height="31" alt="Venable">
+				</figure>
+			</li>
+
+			<li class="swiper-slide">
+				<figure>
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-3_-_abcdef_-_11a2592c65797d01b74ecc516c37afbcbaa8f053.svg" width="143" height="90" alt="BP" role="img">
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-3-dark_-_abcdef_-_11a2592c65797d01b74ecc516c37afbcbaa8f053.svg" width="143" height="90" alt="BP" role="img">
+				</figure>
+			</li>
+
+			<li class="swiper-slide">
+				<figure>
+					<img loading="lazy" src="/images/jcogs_img/cache/bachus-schanker-dark_-_abcdef_-_13a64ce64c5cf079da47e83ad411ca5b85c8991f.webp" width="143" height="33" alt="BP">
+				</figure>
+			</li>
+
+			<li class="swiper-slide">
+				<figure>
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-4_-_abcdef_-_fa95586fb4cab51c9f04809c076875e7403742eb.svg" width="143" height="86" alt="Cartoon Network" role="img">
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-4-dark_-_abcdef_-_fa95586fb4cab51c9f04809c076875e7403742eb.svg" width="143" height="86" alt="Cartoon Network" role="img">
+				</figure>
+			</li>
+
+			<li class="swiper-slide">
+				<figure>
+					<img loading="lazy" src="/images/jcogs_img/cache/psbr-dark_-_abcdef_-_5175d0fc2238b7380c625c036b22eef2fcd8eb46.webp" width="143" height="141" alt="Panish Shea Boyle & Ravipudi">
+				</figure>
+			</li>
+
+			<li class="swiper-slide">
+				<figure>
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-5_-_abcdef_-_3695460fe33e4c851dc5182fc00db8edaf2a6b2d.svg" width="143" height="50" alt="Comedy Central" role="img">
+					<img loading="lazy" src="/images/jcogs_img/cache/logo-5-dark_-_abcdef_-_3695460fe33e4c851dc5182fc00db8edaf2a6b2d.svg" width="143" height="50" alt="Comedy Central" role="img">
+				</figure>
+			</li>
+		</ul><!--swiper wrapper  -->
+	</div>
+</div><!-- /.ticker -->
+
+
+<script type="application/ld+json">
+	{
+	  "@context": "https://schema.org",
+	  "@type": "Organization",
+	  "name": "High Impact",
+	  "image": "https://www.highimpact.com/images/uploads/common/hi-og.png",
+	  "@id": "https://www.highimpact.com/",
+	  "url": "https://www.highimpact.com/",
+	  "telephone": "800-749-2184",
+	  "address": {
+		"@type": "PostalAddress",
+		"streetAddress": "8008 E Arapahoe Ct",
+		"addressLocality": "Centennial",
+		"addressRegion": "CO",
+		"postalCode": "80112",
+		"addressCountry": "US"
+	  },
+	  "sameAs": [
+		"https://www.facebook.com/HighImpactLegalExhibits/",
+		"https://www.instagram.com/highimpactlaw/",
+		"https://www.linkedin.com/company/high-impact-llc/",
+		"https://twitter.com/HighImpactLaw"
+	  ]
+	}
+</script>
+
+		<footer class="footer footer--dark">
+			<div class="shell">
+				<div class="footer__inner">
+					<a href="https://www.highimpact.com/" class="footer__logo">
+						
+						<img loading="lazy" src="/images/jcogs_img/cache/medi-hype-white_-_abcdef_-_dc68c50170446f9b500a2b6c904823fecd33c2a3.svg" width="320" height="44" alt="MediVisuals + High Impact" role="img">
+						
+					</a>
+
+					<div class="footer__content">
+	<h4>Mailing list</h4>
+
+	<div class="footer__entry">
+		<p>Get exclusive updates on MediVisuals + High Impact products, services, and recent case studies delivered straight to your inbox.</p>
+	</div><!-- /.footer__entry -->
+
+	<div class="subscribe footer__subscribe">
+
+		<form  method="POST">
+<input type="hidden" name="csrf_token" value="473222d85f622ecf241c4cffe347509f421d7a58" /><input type="hidden" name="formHash" value="5KM0OK02p_0dc8_e43e522df2b80405fe5d162f30ba1862d0c1d4276872d0e91507b" /><a id="155c88-form-5KM0OK02p_0dc8_e43e522df2b80405fe5d162f30ba1862d0c1d4276872d0e91507b"></a><div style="position: absolute !important; width: 0 !important; height: 0 !important; overflow: hidden !important;" aria-hidden="true" tabindex="-1"><label for="freeform_form_handle_b539bd">Leave this field blank</label><input type="text" value="527f6c" name="freeform_form_handle_b539bd" id="freeform_form_handle_b539bd" /></div>
+
+		
+
+			<div class="subscribe__row">
+
+				<div class="subscribe__col">
+					<label for="form-input-email" class="hidden">Email</label>
+					<input  name="email" type="email" id="form-input-email" class="subscribe__field required" placeholder="Email address"/>
+				</div><!-- /.subscribe__col -->
+
+				<div class="subscribe__col subscribe__col--size1">
+					<button type="submit" class="btn subscribe__btn">Subscribe</button>
+				</div><!-- /.subscribe__col -->
+			</div><!-- /.subscribe__row -->
+		<script>var o = document.getElementsByName("freeform_form_handle_b539bd"); for (var i in o) { if (!o.hasOwnProperty(i)) {continue;} o[i].value = "26800aab6"; }</script>
+<script>"use strict";document.addEventListener("DOMContentLoaded",function(){var t=document.getElementById("155c88-form-5KM0OK02p_0dc8_e43e522df2b80405fe5d162f30ba1862d0c1d4276872d0e91507b");if(t){var e=t.parentElement;e&&e.addEventListener("submit",function(){var t=e.querySelectorAll("[type=submit]:not([name=form_previous_page_button])"),n=!0,r=!1,i=void 0;try{for(var a,o=function(){var t=a.value;t.disabled=!0,setTimeout(function(){t.disabled=!1},6e5)},d=t[Symbol.iterator]();!(n=(a=d.next()).done);n=!0)o()}catch(u){r=!0,i=u}finally{try{!n&&d["return"]&&d["return"]()}finally{if(r)throw i}}})}});</script></form>
+
+	</div><!-- /.subscribe -->
+</div><!-- /.footer__content -->
+
+				</div><!-- /.footer__inner -->
+
+				<div class="footer__bar">
+					<div class="footer__bar-content">
+						<p>Copyright &copy; 2025 MediVisuals + High Impact</p>
+
+						<p>All rights reserved. <a href="https://www.highimpact.com/privacy-policy">Privacy Policy</a></p>
+					</div><!-- /.footer__bar-content -->
+
+					<div class="footer__bar-socials socials">
+						<ul>
+							<li>
+								<a href="https://www.facebook.com/HighImpactLegalExhibits/" target="_blank" rel="nofollow" aria-label="Follow High Impact on Facebook">
+									<i class="ph-fill ph-facebook-logo"></i>
+								</a>
+							</li>
+
+							<li>
+								<a href="https://www.instagram.com/highimpactlaw/" target="_blank" rel="nofollow" aria-label="Follow High Impact on Instagram">
+									<i class="ph-fill ph-instagram-logo"></i>
+								</a>
+							</li>
+
+							<li>
+								<a href="https://www.linkedin.com/company/high-impact-llc/" target="_blank" rel="nofollow" aria-label="Follow High Impact on LinkedIn">
+									<i class="ph-fill ph-linkedin-logo"></i>
+								</a>
+							</li>
+
+							<li class="twitter-x">
+								<a href="https://twitter.com/HighImpactLaw" target="_blank" rel="nofollow" aria-label="Follow High Impact on X, formerly Twitter">
+									<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+									<path fill-rule="evenodd" clip-rule="evenodd" d="M21.5 11.75C21.5 17.1348 17.1348 21.5 11.75 21.5C6.36522 21.5 2 17.1348 2 11.75C2 6.36522 6.36522 2 11.75 2C17.1348 2 21.5 6.36522 21.5 11.75ZM10.4043 12.3322L5.74394 6.10098H9.3358L12.3911 10.1861L16.1723 6.10098H17.2279L12.8626 10.8169L17.7853 17.3986H14.1935L10.8761 12.9628L6.77013 17.3986H5.71457L10.4043 12.3322ZM8.94627 6.87842H7.29619L14.5828 16.6211H16.2329L8.94627 6.87842Z" fill="currentColor"/>
+									</svg>
+								</a>
+							</li>
+
+							<li>
+								<a href="https://www.youtube.com/@HighImpactLegalExhibits" target="_blank" rel="nofollow" aria-label="Follow High Impact on youTube">
+									<i class="ph-fill ph-youtube-logo"></i>
+								</a>
+							</li>
+						</ul>
+					</div><!-- /.footer__bar-socilas socials -->
+				</div><!-- /.footer__bar -->
+			</div><!-- /.shell -->
+
+		</footer><!-- /.footer -->
+
+	</div><!-- /.wrapper -->
+
+	<script type="text/javascript" src="/build/assets/vendor/jquery-3.7.1.min.js"></script>
+	<script src="//fast.wistia.com/assets/external/E-v1.js" async></script>
+
+	<!-- Wistia -->
+	<script>var $wc_load=function(a){return JSON.parse(JSON.stringify(a))},$wc_leads=$wc_leads||{doc:{url:$wc_load(document.URL),ref:$wc_load(document.referrer),search:$wc_load(location.search),hash:$wc_load(location.hash)}};</script>
+	<script src="//s.ksrndkehqnwntyxlhgto.com/117300.js"></script>
+
+	
+	<!-- Podium -->
+	<script defer src="https://connect.podium.com/widget.js#ORG_TOKEN=8dbc5d4c-4c22-4160-8cfd-5d2a50f85887" id="podium-widget" data-organization-api-token="8dbc5d4c-4c22-4160-8cfd-5d2a50f85887"></script>
+	
+
+	
+
+</body>
+</html>

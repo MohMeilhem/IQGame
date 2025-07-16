@@ -1,0 +1,191 @@
+﻿@model IEnumerable<IQGame.Shared.Models.Question>
+
+@{
+    ViewData["Title"] = "Questions";
+    var selectedCategory = ViewData["SelectedCategory"]?.ToString();
+    var selectedDifficulty = ViewData["SelectedDifficulty"]?.ToString();
+    var categories = ViewData["Categories"] as SelectList ?? new SelectList(Enumerable.Empty<SelectListItem>());
+    var apiBaseUrl = "https://localhost:7187"; // Add API base URL
+}
+
+<h1>Questions</h1>
+
+<!-- Display messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["InfoMessage"] != null)
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @TempData["InfoMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<p>
+    <a asp-action="Create" asp-route-categoryId="@selectedCategory" asp-route-difficulty="@selectedDifficulty" class="btn btn-success">+ Create New Question</a>
+    <a asp-action="BulkCreate" asp-route-categoryId="@selectedCategory" asp-route-difficulty="@selectedDifficulty" class="btn btn-outline-primary ms-2">📥 Bulk Add Questions</a>
+    <form asp-action="FixQuestionPoints" method="post" style="display: inline;">
+        <button type="submit" class="btn btn-warning ms-2" onclick="return confirm('This will fix points for all questions with 0 points. Continue?');">
+            🔧 Fix Question Points
+        </button>
+    </form>
+</p>
+
+<!-- Filters -->
+<form method="get" class="mb-4 row">
+    <div class="col-md-4">
+        <label>Category</label>
+        <select name="categoryId" class="form-select">
+            <option value="">-- All Categories --</option>
+            @foreach (var cat in categories)
+            {
+                var selected = cat.Value == selectedCategory ? "selected" : null;
+                <option value="@cat.Value" selected="@selected">@cat.Text</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label>Difficulty</label>
+        <select name="difficulty" class="form-select">
+            @{
+                var difficulties = new[] {
+            new { Value = "1", Label = "Easy" },
+            new { Value = "2", Label = "Medium" },
+            new { Value = "3", Label = "Hard" }
+            };
+            }
+            <option value="">-- All --</option>
+            @foreach (var d in difficulties)
+            {
+                var selected = d.Value == selectedDifficulty ? "selected" : null;
+                <option value="@d.Value" selected="@selected">@d.Label</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Reset</a>
+    </div>
+</form>
+
+<!-- Search + Bulk Delete -->
+<div class="row mb-3">
+    <div class="col-md-6">
+        <input type="text" id="searchBox" class="form-control" placeholder="🔍 Search questions..." />
+    </div>
+    <div class="col-md-6 text-end">
+        <form id="bulkDeleteForm" asp-action="BulkDelete" method="post">
+            <input type="hidden" name="returnCategoryId" value="@selectedCategory" />
+            <input type="hidden" name="returnDifficulty" value="@selectedDifficulty" />
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selected questions?');">
+                🗑 Delete Selected
+            </button>
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped" id="questionsTable">
+    <thead>
+        <tr>
+            <th><input type="checkbox" id="selectAll" /></th>
+            <th>Image</th>
+            <th>Text</th>
+            <th>Difficulty</th>
+            <th>Answer Image</th>
+            <th>Correct Answer</th>
+            <th>Category</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td><input type="checkbox" name="selectedIds" form="bulkDeleteForm" value="@item.Id" class="rowCheckbox" /></td>
+                <td>
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        var imageUrl = item.ImageUrl.StartsWith("http") ? item.ImageUrl : $"{apiBaseUrl}{item.ImageUrl}";
+                        <img src="@imageUrl" width="80" height="80" style="object-fit:cover;" alt="Question Image" />
+                    }
+                </td>
+                <td class="searchable">@item.Text</td>
+                <td>
+                    @switch (item.Difficulty)
+                    {
+                        case 1:
+                            <span class="badge bg-success">Easy</span>
+                            break;
+                        case 2:
+                            <span class="badge bg-warning text-dark">Medium</span>
+                            break;
+                        case 3:
+                            <span class="badge bg-danger">Hard</span>
+                            break;
+                        default:
+                            <span class="badge bg-secondary">Unknown</span>
+                            break;
+                    }
+                </td>
+                <td>
+                    @item.Answers?.FirstOrDefault(a => a.IsCorrect)?.Text
+                </td>
+                <td>
+                    @{
+                        var correctAnswer = item.Answers?.FirstOrDefault(a => a.IsCorrect);
+                        if (!string.IsNullOrEmpty(correctAnswer?.ImageUrl))
+                        {
+                            var answerImageUrl = correctAnswer.ImageUrl.StartsWith("http") ? correctAnswer.ImageUrl : $"{apiBaseUrl}{correctAnswer.ImageUrl}";
+                            <img src="@answerImageUrl" width="60" height="60" style="object-fit:cover;" alt="Answer Image" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">No image</span>
+                        }
+                    }
+                </td>
+                <td class="searchable">@item.Category?.Name</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" asp-route-categoryId="@selectedCategory" asp-route-difficulty="@selectedDifficulty" class="btn btn-sm btn-primary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" asp-route-returnCategoryId="@selectedCategory" asp-route-returnDifficulty="@selectedDifficulty" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        // Live search
+        document.getElementById("searchBox").addEventListener("input", function () {
+            var filter = this.value.toLowerCase();
+            var rows = document.querySelectorAll("#questionsTable tbody tr");
+
+            rows.forEach(function (row) {
+                var text = row.querySelectorAll(".searchable");
+                var match = Array.from(text).some(td => td.textContent.toLowerCase().includes(filter));
+                row.style.display = match ? "" : "none";
+            });
+        });
+
+        // Select all checkbox
+        document.getElementById("selectAll").addEventListener("change", function () {
+            var checkboxes = document.querySelectorAll(".rowCheckbox");
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+    </script>
+}

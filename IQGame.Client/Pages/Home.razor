@@ -1,0 +1,324 @@
+﻿@page "/"
+@inject NavigationManager NavManager
+@inject HttpClient Http
+
+<div class="container d-flex flex-column align-items-center" dir="rtl">
+    <!-- Hero Section -->
+    <div class="session-setup-section mb-4 w-100" style="background: var(--gradient-primary); color: #fff;">
+        <div class="row align-items-center flex-row-reverse">
+            <div class="col-md-7 text-end">
+                <h1 class="display-3 fw-bold mb-3" style="color: #fff; text-shadow: 2px 2px 8px #6c3fc5, 0 0 8px #0A6A4E; background: none;">
+                    <span class="me-2">🎮</span>مرحبًا بك في لعبة الذكاء
+                </h1>
+                <p class="lead mb-4" style="color: #f8f9fa; text-shadow: 1px 1px 6px #333; background: rgba(0,0,0,0.08); border-radius: 1rem; display: inline-block; padding: 0.5rem 1rem;">
+                    اختبر معلوماتك، واجه أصدقاءك، وحقق أعلى النقاط في لعبة الذكاء الجماعية.
+                </p>
+                <button class="btn btn-lg btn-success px-5 py-3 fw-bold" style="background: linear-gradient(90deg, #6c3fc5 0%, #0A6A4E 100%); border: none; color: #fff; text-shadow: 1px 1px 6px #333;" @onclick='() => NavManager.NavigateTo("/session-setup")'>
+                    🟢 ابدأ اللعب الآن
+                </button>
+            </div>
+            <div class="col-md-5 text-center mb-3 mb-md-0">
+                <img src="images/Logos/logo-main.png" alt="IQ Game Logo" style="max-width: 180px; margin-bottom: 2rem;" />
+                <div style="width: 320px; height: 220px; background: linear-gradient(135deg, #6c3fc5 0%, #0A6A4E 100%); border-radius: 2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(108,63,197,0.18);">
+                    <span class="text-white fw-bold fs-4" style="text-shadow: 1px 1px 8px #232323;">[صورة: فريقان يتنافسان، مؤقت، نقاط]</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How to Play Section -->
+    <div class="session-setup-section mb-4 w-100 bg-white" style="color: var(--primary-purple);">
+        <h2 class="text-center mb-4 fw-bold" style="background: linear-gradient(90deg, #6c3fc5 0%, #0A6A4E 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">شرح طريقة اللعب</h2>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4">
+                <div class="step-card p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">✏️</div>
+                    <h5 class="fw-bold mb-2">أدخل اسم الجلسة وأسماء الفريقين</h5>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">🎯</div>
+                    <h5 class="fw-bold mb-2">اختر 6 فئات من أصل +50 فئة</h5>
+                        </div>
+                        </div>
+            <div class="col-md-4">
+                <div class="step-card p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">❓</div>
+                    <h5 class="fw-bold mb-2">كل فئة تحتوي على 6 أسئلة (250 / 500 / 750 نقطة)</h5>
+                        </div>
+                    </div>
+            <div class="col-md-4">
+                <div class="step-card p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">⏱️</div>
+                    <h5 class="fw-bold mb-2">60 ثانية للإجابة – ثم فرصة ثانية للفريق الآخر</h5>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">🧠</div>
+                    <h5 class="fw-bold mb-2">استخدم وسائل المساعدة بحكمة</h5>
+                        </div>
+                    </div>
+            <div class="col-md-4">
+                <div class="step-card p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">🏆</div>
+                    <h5 class="fw-bold mb-2">اربح بناءً على النقاط النهائية</h5>
+                </div>
+            </div>
+        </div>
+            </div>
+
+    <!-- Help Tools Section -->
+    <div class="session-setup-section mb-4 w-100 bg-white" style="color: var(--primary-purple);">
+        <h2 class="text-center mb-4 fw-bold" style="background: linear-gradient(90deg, #6c3fc5 0%, #0A6A4E 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">وسائل المساعدة</h2>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4">
+                <div class="help-tool-card p-4 h-100 text-center rounded-4" style="background: linear-gradient(135deg, #6c3fc5 0%, #0A6A4E 100%); color: #fff;">
+                    <div class="mb-2 d-flex justify-content-center">
+                        <span style="background: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; width: 84px; height: 84px; box-shadow: 0 4px 24px rgba(108, 63, 197, 0.13);">
+                            <img src="images/helptools/brain.png" alt="خيارات" style="width: 56px; height: 56px; object-fit: contain;" />
+                        </span>
+                    </div>
+                    <h5 class="fw-bold mb-2">خيارات</h5>
+                    <p>يعرض 4 خيارات للإجابة (لمرة واحدة لكل فريق).</p>
+                </div>
+                    </div>
+            <div class="col-md-4">
+                <div class="help-tool-card p-4 h-100 text-center rounded-4" style="background: linear-gradient(135deg, #0A6A4E 0%, #6c3fc5 100%); color: #fff;">
+                    <div class="mb-2 d-flex justify-content-center">
+                        <span style="background: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; width: 84px; height: 84px; box-shadow: 0 4px 24px rgba(10, 106, 78, 0.13);">
+                            <img src="images/helptools/peace.png" alt="إجابتين" style="width: 56px; height: 56px; object-fit: contain;" />
+                        </span>
+                    </div>
+                    <h5 class="fw-bold mb-2">إجابتين</h5>
+                    <p>فرصة لمحاولة الإجابة مرتين على نفس السؤال.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="help-tool-card p-4 h-100 text-center rounded-4" style="background: linear-gradient(135deg, #6c3fc5 0%, #0A6A4E 100%); color: #fff;">
+                    <div class="mb-2 d-flex justify-content-center">
+                        <span style="background: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; width: 84px; height: 84px; box-shadow: 0 4px 24px rgba(108, 63, 197, 0.13);">
+                            <img src="images/helptools/target.png" alt="دبل نقاط" style="width: 56px; height: 56px; object-fit: contain;" />
+                        </span>
+                    </div>
+                    <h5 class="fw-bold mb-2">دبل نقاط</h5>
+                    <p>ضاعف نقاط السؤال إذا أجبت إجابة صحيحة (يُفعّل قبل بدء السؤال).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="session-setup-section mb-4 w-100 bg-white" style="color: var(--primary-purple);">
+        <h2 class="text-center mb-4 fw-bold" style="background: linear-gradient(90deg, #6c3fc5 0%, #0A6A4E 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">مميزات اللعبة</h2>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4">
+                <div class="feature-tile p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">⚔️</div>
+                    <h5 class="fw-bold mb-2">تحدي مباشر بين فريقين</h5>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-tile p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">📚</div>
+                    <h5 class="fw-bold mb-2">فئات متعددة: أفلام، ألعاب، رياضة، مناهج، منطق...</h5>
+                </div>
+                    </div>
+            <div class="col-md-4">
+                <div class="feature-tile p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">🧮</div>
+                    <h5 class="fw-bold mb-2">نظام نقاط دقيق حسب صعوبة السؤال</h5>
+                </div>
+                    </div>
+            <div class="col-md-4">
+                <div class="feature-tile p-4 h-100 text-center shadow rounded-4 bg-white">
+                    <div class="fs-1 mb-2">⏰</div>
+                    <h5 class="fw-bold mb-2">مؤقت زمني وحماس اللعب</h5>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Plans Price/Value Display Section -->
+    <div class="plans-price-section">
+        <h3 class="mt-5 mb-3">أسعار الباقات</h3>
+        <div class="plans-price-list">
+            @if (plans == null)
+            {
+                <div>جاري التحميل...</div>
+            }
+            else if (plans.Count == 0)
+            {
+                <div>لا توجد باقات متاحة.</div>
+            }
+            else
+            {
+                @foreach (var plan in plans)
+                {
+                    <div class="plan-price-card">
+                        <div class="plan-price-title">@plan.Name</div>
+                        <div class="plan-price-value">@plan.GamesCount لعبة</div>
+                        <div class="plan-price-amount">@((plan.Price == 0) ? "مجانية" : plan.Price.ToString("C0"))</div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+</div>
+<div style="padding-top: 2rem;"></div>
+<Footer />
+
+<style>
+    :root {
+        --primary-purple: #6c3fc5;
+        --primary-green: #0A6A4E;
+        --accent-green: #4CAF50;
+        --white: #ffffff;
+        --light-gray: #f8f9fa;
+        --dark-gray: #343a40;
+        --shadow-light: 0 2px 8px rgba(0,0,0,0.1);
+        --shadow-medium: 0 4px 16px rgba(0,0,0,0.15);
+        --shadow-heavy: 0 8px 25px rgba(0,0,0,0.2);
+        --gradient-primary: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-green) 100%);
+        --gradient-secondary: linear-gradient(135deg, rgba(108, 63, 197, 0.1) 0%, rgba(10, 106, 78, 0.1) 100%);
+    }
+    .container {
+        max-width: 1400px;
+        padding: 2rem 1rem 0 1rem;
+        background: linear-gradient(135deg, rgba(108, 63, 197, 0.02) 0%, rgba(10, 106, 78, 0.02) 100%);
+        min-height: calc(100vh - 70px); /* Subtract header height (70px) only */
+    }
+    .session-setup-section {
+        background: var(--gradient-secondary);
+        border-radius: 2.5rem;
+        padding: 3rem;
+        margin-top: 2rem;
+        border: 3px solid rgba(108, 63, 197, 0.15);
+        box-shadow: var(--shadow-medium);
+        backdrop-filter: blur(10px);
+    }
+    .step-card, .help-tool-card, .feature-tile {
+        border-radius: 1.7rem;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s cubic-bezier(.23,1.01,.32,1);
+    }
+    .step-card:hover, .help-tool-card:hover, .feature-tile:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: var(--shadow-heavy);
+    }
+    .feature-tile {
+        background: #fff;
+        color: var(--primary-purple);
+    }
+    .help-tool-card {
+        color: #fff;
+    }
+    .random-btn {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: 1.5rem;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-light);
+        position: relative;
+        overflow: hidden;
+    }
+    .random-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    .random-btn:hover::before {
+        left: 100%;
+    }
+    .random-btn:hover:not(:disabled) {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-heavy);
+    }
+    .random-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .all-random-btn {
+        background: var(--gradient-primary);
+    }
+    .clear-btn {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+    }
+    .start-game-btn {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: 2.5rem;
+        padding: 1.5rem 5rem;
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-medium);
+        margin-top: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .start-game-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.6s;
+    }
+    .start-game-btn:hover::before {
+        left: 100%;
+    }
+    .start-game-btn:hover:not(:disabled) {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-heavy);
+    }
+    .start-game-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .nav-link {
+        color: var(--primary-purple) !important;
+        font-size: 1.1rem;
+        transition: color 0.2s;
+    }
+    .nav-link:hover, .nav-link.active {
+        color: var(--primary-green) !important;
+    }
+</style>
+
+@code {
+    List<PlanDto> plans;
+
+    protected override async Task OnInitializedAsync()
+    {
+        plans = await Http.GetFromJsonAsync<List<PlanDto>>("/api/plans");
+    }
+
+    public class PlanDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int GamesCount { get; set; }
+        public decimal Price { get; set; }
+        public bool IsActive { get; set; }
+    }
+}

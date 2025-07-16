@@ -1,0 +1,90 @@
+@{
+    ViewData["Title"] = "Google CSE Test";
+}
+
+<h1>Google CSE Test Results</h1>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">
+        <h4>Error Occurred</h4>
+        <p>@ViewBag.Error</p>
+        @if (ViewBag.StackTrace != null)
+        {
+            <details>
+                <summary>Stack Trace</summary>
+                <pre>@ViewBag.StackTrace</pre>
+            </details>
+        }
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-header">
+            <h5>Google CSE Test Results</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Service Type:</strong> @ViewBag.ServiceType</p>
+            <p><strong>Test Result:</strong> @ViewBag.TestResult</p>
+            
+            @if (ViewBag.ConfigInfo != null)
+            {
+                <div class="mt-3">
+                    <h6>Configuration Status:</h6>
+                    <ul>
+                        <li><strong>Preferred Provider:</strong> @ViewBag.ConfigInfo.PreferredProvider</li>
+                        <li><strong>Google CSE Configured:</strong> 
+                            <span class="badge @(ViewBag.ConfigInfo.GoogleCSEConfigured ? "bg-success" : "bg-danger")">
+                                @(ViewBag.ConfigInfo.GoogleCSEConfigured ? "Yes" : "No")
+                            </span>
+                        </li>
+                        <li><strong>SerpAPI Configured:</strong> 
+                            <span class="badge @(ViewBag.ConfigInfo.SerpAPIConfigured ? "bg-success" : "bg-danger")">
+                                @(ViewBag.ConfigInfo.SerpAPIConfigured ? "Yes" : "No")
+                            </span>
+                        </li>
+                        @if (ViewBag.ConfigInfo.GoogleCSEApiKey != null)
+                        {
+                            <li><strong>Google CSE API Key:</strong> @ViewBag.ConfigInfo.GoogleCSEApiKey</li>
+                        }
+                        @if (ViewBag.ConfigInfo.GoogleCSESearchEngineId != null)
+                        {
+                            <li><strong>Google CSE Search Engine ID:</strong> @ViewBag.ConfigInfo.GoogleCSESearchEngineId</li>
+                        }
+                    </ul>
+                </div>
+            }
+            
+            @if (ViewBag.TestResult != null && ViewBag.TestResult.ToString().Contains("defaults"))
+            {
+                <div class="alert alert-warning">
+                    <strong>Note:</strong> The service returned a default image, which may indicate that the API is not working properly or no images were found.
+                </div>
+                
+                @if (ViewBag.ConfigInfo != null && !ViewBag.ConfigInfo.GoogleCSEConfigured)
+                {
+                    <div class="alert alert-danger">
+                        <strong>Configuration Issue:</strong> Google CSE is not properly configured. Please check your <code>appsettings.json</code> file and ensure both the GoogleCSE.ApiKey and GoogleCSE.SearchEngineId are set correctly.
+                    </div>
+                }
+            }
+            else if (ViewBag.TestResult != null)
+            {
+                <div class="alert alert-success">
+                    <strong>Success!</strong> The Google CSE service returned a custom image path.
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Image Preview:</h6>
+                    <img src="@ViewBag.TestResult" alt="Test Image" class="img-fluid" style="max-width: 300px;" />
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<div class="mt-3">
+    <a href="/Home/ImageSearchStatus" class="btn btn-primary">View Provider Status</a>
+    <a href="/" class="btn btn-secondary">Back to Home</a>
+</div> 

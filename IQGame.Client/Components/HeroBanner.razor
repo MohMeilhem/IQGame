@@ -1,0 +1,17 @@
+@inject NavigationManager NavManager
+<div class="hero-banner d-flex flex-row-reverse align-items-center justify-content-between py-5" dir="rtl">
+    <div class="hero-banner-text text-end pe-5">
+        <h1 class="display-3 fw-bold mb-3"><span class="me-2">🎮</span>مرحبًا بك في لعبة الذكاء</h1>
+        <p class="lead mb-4">اختبر معلوماتك، واجه أصدقاءك، وحقق أعلى النقاط في لعبة الذكاء الجماعية.</p>
+        <button class="btn btn-lg btn-success px-5 py-3 fw-bold" style="background: linear-gradient(90deg, #6c3fc5 0%, #0A6A4E 100%); border: none;" @onclick='() => NavManager.NavigateTo("/session-setup")'>
+            🟢 ابدأ اللعب الآن
+        </button>
+    </div>
+    <div class="hero-banner-image text-center">
+        <img src="images/Logos/logo-main.png" alt="IQ Game Logo" style="max-width: 180px; margin-bottom: 2rem;" />
+        <div style="width: 320px; height: 220px; background: linear-gradient(135deg, #6c3fc5 0%, #0A6A4E 100%); border-radius: 2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(108,63,197,0.18);">
+            <!-- Placeholder for vector-style artwork -->
+            <span class="text-white fw-bold fs-4">[صورة: فريقان يتنافسان، مؤقت، نقاط]</span>
+        </div>
+    </div>
+</div> 
